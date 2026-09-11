@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "Reoil",
+    "slug": "reoil",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "reoil",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1b4332"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.reoil.app"
+    },
+    "android": {
+      "package": "com.reoil.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#1b4332",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": ["expo-router"]
+  }
+}

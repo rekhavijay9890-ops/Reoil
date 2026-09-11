@@ -6,7 +6,9 @@
     "dev": "next dev -p 4318",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "mobile": "cd mobile && npm start",
+    "mobile:apk": "bash scripts/build-android-apk.sh"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
