@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reoil — Used Cooking Oil Collection</title>
+  <style>
+    :root {
+      --green-dark: #1b4332;
+      --green: #2d6a4f;
+      --green-light: #52b788;
+      --cream: #f8f9f6;
+      --text: #1a1a1a;
+      --muted: #5c5c5c;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      color: var(--text);
+      background: var(--cream);
+      line-height: 1.6;
+    }
+
+    header {
+      background: white;
+      border-bottom: 1px solid #e8ebe8;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .nav {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--green-dark);
+      letter-spacing: -0.5px;
+    }
+
+    .logo span { color: var(--green-light); }
+
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      margin-left: 1.5rem;
+      font-size: 0.95rem;
+    }
+
+    nav a:hover { color: var(--green); }
+
+    .hero {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 4rem 1.5rem 3rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: center;
+    }
+
+    .hero h1 {
+      font-size: 2.75rem;
+      line-height: 1.15;
+      color: var(--green-dark);
+      margin-bottom: 1rem;
+    }
+
+    .hero p {
+      font-size: 1.125rem;
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+    }
+
+    .btn {
+      display: inline-block;
+      background: var(--green);
+      color: white;
+      padding: 0.875rem 1.75rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .btn:hover { background: var(--green-dark); }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--green);
+      border: 2px solid var(--green);
+      margin-left: 0.75rem;
+    }
+
+    .btn-outline:hover {
+      background: var(--green);
+      color: white;
+    }
+
+    .hero-card {
+      background: linear-gradient(135deg, var(--green-dark), var(--green));
+      border-radius: 20px;
+      padding: 2.5rem;
+      color: white;
+      box-shadow: 0 20px 40px rgba(27, 67, 50, 0.25);
+    }
+
+    .hero-card h2 { font-size: 1.25rem; margin-bottom: 1rem; opacity: 0.9; }
+
+    .stat {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .stat:last-child { border: none; }
+
+    .section {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem;
+    }
+
+    .section h2 {
+      text-align: center;
+      font-size: 2rem;
+      color: var(--green-dark);
+      margin-bottom: 2.5rem;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    .step {
+      background: white;
+      border-radius: 12px;
+      padding: 1.75rem;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+
+    .step-num {
+      width: 48px;
+      height: 48px;
+      background: var(--green-light);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.25rem;
+      margin: 0 auto 1rem;
+    }
+
+    .step h3 {
+      color: var(--green-dark);
+      margin-bottom: 0.5rem;
+    }
+
+    .step p { color: var(--muted); font-size: 0.95rem; }
+
+    .cta {
+      background: var(--green-dark);
+      color: white;
+      text-align: center;
+      padding: 3.5rem 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .cta h2 { color: white; margin-bottom: 0.75rem; }
+
+    .cta p { opacity: 0.85; margin-bottom: 1.5rem; }
+
+    .cta .btn { background: white; color: var(--green-dark); }
+
+    .cta .btn:hover { background: var(--cream); }
+
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      color: var(--muted);
+      font-size: 0.875rem;
+    }
+
+    @media (max-width: 768px) {
+      .hero { grid-template-columns: 1fr; padding-top: 2rem; }
+      .hero h1 { font-size: 2rem; }
+      .steps { grid-template-columns: 1fr; }
+      nav { display: none; }
+      .btn-outline { margin-left: 0; margin-top: 0.75rem; display: inline-block; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="nav">
+      <div class="logo">Re<span>oil</span></div>
+      <nav>
+        <a href="#how">How it works</a>
+        <a href="#contact">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div>
+      <h1>Turn used cooking oil into a cleaner planet</h1>
+      <p>Reoil collects used cooking oil from homes and restaurants, keeping grease out of drains and turning waste into biofuel.</p>
+      <a href="#contact" class="btn">Schedule a pickup</a>
+      <a href="#how" class="btn btn-outline">Learn more</a>
+    </div>
+    <div class="hero-card">
+      <h2>Why Reoil?</h2>
+      <div class="stat"><span>Homes & restaurants served</span><strong>500+</strong></div>
+      <div class="stat"><span>Oil collected (liters)</span><strong>12,000+</strong></div>
+      <div class="stat"><span>CO₂ reduced (tons)</span><strong>8+</strong></div>
+    </div>
+  </section>
+
+  <section class="section" id="how">
+    <h2>How it works</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Book a pickup</h3>
+        <p>Tell us your location and how much oil you have. We schedule a convenient time.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>We collect</h3>
+        <p>Our team picks up your used oil in sealed containers — no mess, no hassle.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>Recycle & reuse</h3>
+        <p>Your oil is processed into biofuel instead of polluting waterways.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta" id="contact">
+    <h2>Ready to recycle your oil?</h2>
+    <p>Join homes and restaurants making a difference today.</p>
+    <a href="mailto:hello@reoil.example" class="btn">Get in touch</a>
+  </section>
+
+  <footer>
+    &copy; 2026 Reoil — Used cooking oil collection
+  </footer>
+
+</body>
+</html>
