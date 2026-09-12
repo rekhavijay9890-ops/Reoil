@@ -12,41 +12,44 @@ export default function Home() {
     <>
       <section className="mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:items-center lg:py-24">
         <div>
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-sm font-medium text-reoil-dark">
-            <Leaf className="size-4" />
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-reoil-light/30 bg-reoil-mint px-4 py-1.5 text-sm font-medium text-reoil-dark">
+            <Leaf className="size-4 text-reoil" />
             Eco-friendly oil recycling
           </div>
-          <h1 className="text-4xl font-bold leading-tight tracking-tight text-reoil-dark sm:text-5xl">
+          <h1 className="font-heading text-balance text-4xl font-bold leading-[1.1] text-reoil-dark sm:text-5xl lg:text-[3.25rem]">
             Turn used cooking oil into a cleaner planet
           </h1>
-          <p className="mt-4 text-lg text-muted-foreground">
+          <p className="mt-5 max-w-lg text-lg leading-relaxed text-muted-foreground">
             Reoil collects used cooking oil from homes and restaurants, keeping grease
             out of drains and turning waste into biofuel.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/schedule" className={cn(buttonVariants({ size: "lg" }))}>
+            <Link
+              href="/schedule"
+              className={cn(buttonVariants({ size: "lg" }), "shadow-md shadow-reoil/20")}
+            >
               Schedule a pickup
             </Link>
             <Link
               href="#how"
-              className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
+              className={cn(buttonVariants({ variant: "outline", size: "lg" }), "border-reoil/20")}
             >
               Learn more
             </Link>
           </div>
         </div>
 
-        <Card className="border-0 bg-gradient-to-br from-reoil-dark to-reoil text-white shadow-xl">
-          <CardContent className="p-8">
-            <h2 className="text-lg font-medium opacity-90">Why Reoil?</h2>
-            <dl className="mt-4 space-y-4">
+        <Card className="overflow-hidden border-0 bg-gradient-to-br from-reoil-dark via-reoil to-reoil-light text-white shadow-2xl shadow-reoil-dark/20">
+          <CardContent className="p-8 sm:p-10">
+            <h2 className="font-heading text-xl font-semibold">Why Reoil?</h2>
+            <dl className="mt-6 space-y-4">
               {stats.map((stat) => (
                 <div
                   key={stat.label}
-                  className="flex items-center justify-between border-b border-white/20 pb-4 last:border-0 last:pb-0"
+                  className="flex items-center justify-between border-b border-white/15 pb-4 last:border-0 last:pb-0"
                 >
-                  <dt className="text-sm opacity-85">{stat.label}</dt>
-                  <dd className="text-xl font-bold">{stat.value}</dd>
+                  <dt className="text-sm leading-snug text-white/85">{stat.label}</dt>
+                  <dd className="font-heading text-2xl font-bold tabular-nums">{stat.value}</dd>
                 </div>
               ))}
             </dl>
@@ -54,21 +57,37 @@ export default function Home() {
         </Card>
       </section>
 
-      <section id="how" className="bg-white py-16 sm:py-20">
+      <section id="how" className="border-t border-border/60 bg-white py-16 sm:py-24">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <h2 className="text-center text-3xl font-bold text-reoil-dark">How it works</h2>
-          <div className="mt-12 grid gap-6 sm:grid-cols-3">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="font-heading text-3xl font-bold text-reoil-dark sm:text-4xl">
+              How it works
+            </h2>
+            <p className="mt-3 text-muted-foreground">
+              Three simple steps from your kitchen to clean energy.
+            </p>
+          </div>
+          <div className="mt-14 grid gap-6 sm:grid-cols-3">
             {steps.map((step, i) => {
               const Icon = stepIcons[i];
               return (
-                <Card key={step.title} className="text-center shadow-sm">
-                  <CardContent className="pt-8 pb-6">
-                    <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-reoil-light text-white">
-                      <Icon className="size-6" />
+                <Card
+                  key={step.title}
+                  className="border-border/60 text-center shadow-sm transition-shadow hover:shadow-md"
+                >
+                  <CardContent className="px-6 pt-8 pb-7">
+                    <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-2xl bg-reoil-mint text-reoil">
+                      <Icon className="size-7" />
                     </div>
-                    <span className="text-sm font-semibold text-reoil-light">Step {i + 1}</span>
-                    <h3 className="mt-1 text-lg font-semibold text-reoil-dark">{step.title}</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">{step.description}</p>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-reoil-light">
+                      Step {i + 1}
+                    </span>
+                    <h3 className="mt-2 font-heading text-lg font-semibold text-reoil-dark">
+                      {step.title}
+                    </h3>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                      {step.description}
+                    </p>
                   </CardContent>
                 </Card>
               );
@@ -77,15 +96,27 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="impact" className="bg-reoil-dark py-16 text-white sm:py-20">
-        <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
-          <h2 className="text-3xl font-bold">Ready to recycle your oil?</h2>
-          <p className="mt-3 text-white/80">
+      <section id="impact" className="relative overflow-hidden bg-reoil-dark py-16 text-white sm:py-24">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-30"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 20% 80%, rgba(82,183,136,0.4) 0%, transparent 50%)",
+          }}
+        />
+        <div className="relative mx-auto max-w-3xl px-4 text-center sm:px-6">
+          <h2 className="font-heading text-balance text-3xl font-bold sm:text-4xl">
+            Ready to recycle your oil?
+          </h2>
+          <p className="mt-4 text-lg text-white/80">
             Join homes and restaurants making a difference today.
           </p>
           <Link
             href="/schedule"
-            className={cn(buttonVariants({ size: "lg", variant: "secondary" }), "mt-8 inline-flex")}
+            className={cn(
+              buttonVariants({ size: "lg", variant: "secondary" }),
+              "mt-8 inline-flex shadow-lg",
+            )}
           >
             Get started
           </Link>

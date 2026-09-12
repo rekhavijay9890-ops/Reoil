@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { API_URL, submitPickup } from "../lib/api";
 import { propertyTypes, quantities } from "../lib/content";
-import { colors } from "../constants/theme";
+import { colors, fonts, radius } from "../constants/theme";
 
 export default function ScheduleScreen() {
   const [name, setName] = useState("");
@@ -188,18 +188,30 @@ function Chip({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.cream },
   scroll: { padding: 20, paddingBottom: 40 },
-  heading: { fontSize: 28, fontWeight: "700", color: colors.dark },
-  subheading: { color: colors.muted, marginTop: 6, marginBottom: 20, lineHeight: 22 },
+  heading: { fontSize: 28, fontFamily: fonts.heading, color: colors.dark },
+  subheading: {
+    fontFamily: fonts.body,
+    color: colors.muted,
+    marginTop: 6,
+    marginBottom: 20,
+    lineHeight: 22,
+  },
   field: { marginBottom: 14 },
-  label: { fontSize: 14, fontWeight: "600", color: colors.dark, marginBottom: 6 },
+  label: {
+    fontSize: 14,
+    fontFamily: fonts.bodySemi,
+    color: colors.dark,
+    marginBottom: 6,
+  },
   input: {
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 12,
+    borderRadius: radius.md,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
+    fontFamily: fonts.body,
     color: colors.text,
   },
   inputMultiline: { minHeight: 80, textAlignVertical: "top" },
@@ -213,20 +225,25 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   chipSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
-  chipText: { color: colors.muted, fontWeight: "600", fontSize: 13 },
+  chipText: { color: colors.muted, fontFamily: fonts.bodySemi, fontSize: 13 },
   chipTextSelected: { color: colors.white },
   primaryButton: {
     backgroundColor: colors.primary,
-    borderRadius: 12,
+    borderRadius: radius.md,
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 8,
   },
   buttonDisabled: { opacity: 0.7 },
-  primaryButtonText: { color: colors.white, fontWeight: "700", fontSize: 16 },
+  primaryButtonText: {
+    color: colors.white,
+    fontFamily: fonts.bodySemi,
+    fontSize: 16,
+  },
   versionText: {
     marginTop: 16,
     fontSize: 11,
+    fontFamily: fonts.body,
     color: colors.muted,
     textAlign: "center",
   },
@@ -242,8 +259,9 @@ const styles = StyleSheet.create({
     color: colors.primary,
     marginBottom: 12,
   },
-  successTitle: { fontSize: 24, fontWeight: "700", color: colors.dark },
+  successTitle: { fontSize: 24, fontFamily: fonts.heading, color: colors.dark },
   successText: {
+    fontFamily: fonts.body,
     color: colors.muted,
     textAlign: "center",
     marginTop: 8,

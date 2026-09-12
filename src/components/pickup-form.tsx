@@ -62,10 +62,12 @@ export function PickupForm() {
 
   if (state === "success") {
     return (
-      <Card className="mx-auto max-w-lg border-reoil-light/30">
+      <Card className="mx-auto max-w-lg border-reoil-light/40 shadow-lg">
         <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
-          <CheckCircle2 className="size-14 text-reoil" />
-          <h2 className="text-2xl font-semibold text-reoil-dark">Pickup requested!</h2>
+          <div className="flex size-16 items-center justify-center rounded-full bg-reoil-mint">
+            <CheckCircle2 className="size-9 text-reoil" />
+          </div>
+          <h2 className="font-heading text-2xl font-semibold text-reoil-dark">Pickup requested!</h2>
           <p className="text-muted-foreground">
             We&apos;ll contact you within 24 hours to confirm your collection time.
           </p>
@@ -78,9 +80,9 @@ export function PickupForm() {
   }
 
   return (
-    <Card className="mx-auto max-w-lg">
-      <CardHeader>
-        <CardTitle className="text-reoil-dark">Schedule a pickup</CardTitle>
+    <Card className="mx-auto max-w-lg border-border/60 shadow-md">
+      <CardHeader className="border-b border-border/50 pb-6">
+        <CardTitle className="font-heading text-xl text-reoil-dark">Schedule a pickup</CardTitle>
         <CardDescription>
           Fill in your details and we&apos;ll arrange a convenient collection time.
         </CardDescription>
