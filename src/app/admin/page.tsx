@@ -60,7 +60,7 @@ export default function AdminPage() {
 
       <Card className="mt-8">
         <CardHeader>
-          <CardTitle>Admin access</CardTitle>
+          <CardTitle className="font-heading">Admin access</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-end">
           <div className="flex-1 space-y-2">

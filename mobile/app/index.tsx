@@ -43,6 +43,23 @@ export default function HomeScreen() {
               </Pressable>
             </Link>
           </View>
+
+          <View style={styles.quickActions}>
+            <Link href="/payment" asChild>
+              <Pressable style={styles.quickCard}>
+                <Text style={styles.quickIcon}>💳</Text>
+                <Text style={styles.quickTitle}>Pay</Text>
+                <Text style={styles.quickSubtitle}>After collection</Text>
+              </Pressable>
+            </Link>
+            <Link href="/contact" asChild>
+              <Pressable style={styles.quickCard}>
+                <Text style={styles.quickIcon}>💬</Text>
+                <Text style={styles.quickTitle}>Help</Text>
+                <Text style={styles.quickSubtitle}>WhatsApp & call</Text>
+              </Pressable>
+            </Link>
+          </View>
         </View>
 
         <LinearGradient
@@ -144,6 +161,32 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   actions: { marginTop: 22 },
+  quickActions: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 14,
+  },
+  quickCard: {
+    flex: 1,
+    backgroundColor: colors.white,
+    borderRadius: radius.lg,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadow.card,
+  },
+  quickIcon: { fontSize: 24, marginBottom: 6 },
+  quickTitle: {
+    fontFamily: fonts.headingSemi,
+    fontSize: 16,
+    color: colors.dark,
+  },
+  quickSubtitle: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.muted,
+    marginTop: 2,
+  },
   primaryButton: {
     backgroundColor: colors.primary,
     borderRadius: radius.md,

@@ -29,6 +29,18 @@ export function Header() {
           >
             Impact
           </Link>
+          <Link
+            href="/payment"
+            className="text-sm font-medium text-muted-foreground transition-colors hover:text-reoil"
+          >
+            Pay
+          </Link>
+          <Link
+            href="/contact"
+            className="text-sm font-medium text-muted-foreground transition-colors hover:text-reoil"
+          >
+            Contact
+          </Link>
           <Link href="/schedule" className={cn(buttonVariants({ size: "sm" }), "shadow-sm")}>
             Schedule pickup
           </Link>

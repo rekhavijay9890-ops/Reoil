@@ -28,5 +28,27 @@
     { "label": "5–10 liters", "value": "5-10" },
     { "label": "10–25 liters", "value": "10-25" },
     { "label": "25+ liters", "value": "25+" }
-  ]
+  ],
+  "contact": {
+    "phone": "+919876543210",
+    "whatsapp": "919876543210",
+    "displayPhone": "+91 98765 43210",
+    "email": "hello@reoil.in",
+    "supportHours": "Monday – Saturday, 9 AM – 6 PM",
+    "whatsappMessage": "Hi Reoil, I need help with my oil pickup."
+  },
+  "payment": {
+    "currency": "INR",
+    "symbol": "₹",
+    "upiId": "reoil@upi",
+    "upiName": "Reoil Collections",
+    "rates": {
+      "home": 8,
+      "restaurant": 6,
+      "commercial": 5
+    },
+    "rateUnit": "per liter",
+    "cashNote": "Prefer cash? Pay our collector directly when we pick up your oil.",
+    "subtitle": "Pay after we collect your used oil. Rates depend on property type and volume."
+  }
 }

@@ -37,6 +37,20 @@ export default function Home() {
               Learn more
             </Link>
           </div>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link
+              href="/payment"
+              className={cn(buttonVariants({ variant: "secondary", size: "sm" }))}
+            >
+              Pay for collection
+            </Link>
+            <Link
+              href="/contact"
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-reoil")}
+            >
+              WhatsApp & call support
+            </Link>
+          </div>
         </div>
 
         <Card className="overflow-hidden border-0 bg-gradient-to-br from-reoil-dark via-reoil to-reoil-light text-white shadow-2xl shadow-reoil-dark/20">
