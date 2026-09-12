@@ -1,5 +1,6 @@
 const API_URL =
-  process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://10.0.2.2:4318";
+  process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "") ??
+  "https://reoil-ten.vercel.app";
 
 export type PickupPayload = {
   name: string;

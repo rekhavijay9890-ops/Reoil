@@ -53,7 +53,9 @@ echo "Java: $(java -version 2>&1 | head -1)"
 echo "ANDROID_HOME: $ANDROID_HOME"
 
 cd "$MOBILE_DIR"
-cp -n .env.example .env 2>/dev/null || true
+export EXPO_PUBLIC_API_URL="${EXPO_PUBLIC_API_URL:-https://reoil-ten.vercel.app}"
+echo "EXPO_PUBLIC_API_URL=$EXPO_PUBLIC_API_URL" > .env
+echo "API URL for this APK: $EXPO_PUBLIC_API_URL"
 
 echo "Running expo prebuild..."
 npx expo prebuild --platform android --clean --no-install
