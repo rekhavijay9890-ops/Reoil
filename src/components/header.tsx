@@ -33,7 +33,7 @@ export function Header() {
             href="/payment"
             className="text-sm font-medium text-muted-foreground transition-colors hover:text-reoil"
           >
-            Pay
+            Get paid
           </Link>
           <Link
             href="/contact"

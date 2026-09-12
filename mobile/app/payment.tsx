@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -10,38 +9,18 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { Link } from "expo-router";
 import { colors, fonts, radius, shadow } from "../constants/theme";
-import { openUpiPayment } from "../lib/contact-actions";
-import { payment, propertyTypes } from "../lib/content";
+import { payout, propertyTypes } from "../lib/content";
 
 export default function PaymentScreen() {
   const [type, setType] = useState("home");
   const [liters, setLiters] = useState("10");
-  const [reference, setReference] = useState("");
+  const [method, setMethod] = useState("cash");
 
-  const rate = payment.rates[type as keyof typeof payment.rates] ?? payment.rates.home;
+  const rate = payout.rates[type as keyof typeof payout.rates] ?? payout.rates.home;
   const litersNum = Math.max(0, Number.parseFloat(liters) || 0);
   const total = useMemo(() => litersNum * rate, [litersNum, rate]);
-
-  async function handlePay() {
-    if (litersNum <= 0) {
-      Alert.alert("Enter liters", "Please enter how many liters we collected.");
-      return;
-    }
-
-    const note = reference.trim()
-      ? `Reoil pickup ${reference.trim()}`
-      : "Reoil oil collection";
-
-    try {
-      await openUpiPayment(total, note);
-    } catch {
-      Alert.alert(
-        "Payment",
-        `Pay ${payment.symbol}${total.toFixed(0)} to UPI ID: ${payment.upiId}`,
-      );
-    }
-  }
 
   return (
     <KeyboardAvoidingView
@@ -49,10 +28,29 @@ export default function PaymentScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <Text style={styles.heading}>Pay for collection</Text>
-        <Text style={styles.subheading}>{payment.subtitle}</Text>
+        <Text style={styles.heading}>{payout.title}</Text>
+        <Text style={styles.subheading}>{payout.subtitle}</Text>
+
+        <View style={styles.flowCard}>
+          {payout.flow.map((item, index) => (
+            <View
+              key={item.step}
+              style={[styles.flowRow, index === payout.flow.length - 1 && styles.flowRowLast]}
+            >
+              <View style={styles.flowNumber}>
+                <Text style={styles.flowNumberText}>{item.step}</Text>
+              </View>
+              <View style={styles.flowContent}>
+                <Text style={styles.flowTitle}>{item.title}</Text>
+                <Text style={styles.flowDescription}>{item.description}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
 
         <View style={styles.card}>
+          <Text style={styles.cardTitle}>Estimate your payout</Text>
+
           <Text style={styles.label}>Property type</Text>
           <View style={styles.chipRow}>
             {propertyTypes.map((item) => (
@@ -69,10 +67,10 @@ export default function PaymentScreen() {
           </View>
 
           <Text style={styles.rateText}>
-            Rate: {payment.symbol}{rate} {payment.rateUnit}
+            We pay {payout.symbol}{rate} {payout.rateUnit}
           </Text>
 
-          <Text style={styles.label}>Liters collected</Text>
+          <Text style={styles.label}>Estimated liters of oil</Text>
           <TextInput
             style={styles.input}
             value={liters}
@@ -82,28 +80,38 @@ export default function PaymentScreen() {
             placeholderTextColor={colors.muted}
           />
 
-          <Text style={styles.label}>Booking reference (optional)</Text>
-          <TextInput
-            style={styles.input}
-            value={reference}
-            onChangeText={setReference}
-            placeholder="Your name or booking ID"
-            placeholderTextColor={colors.muted}
-          />
+          <Text style={styles.label}>How would you like to be paid?</Text>
+          <View style={styles.methodRow}>
+            {payout.methods.map((item) => (
+              <Pressable
+                key={item.value}
+                style={[styles.methodCard, method === item.value && styles.methodCardSelected]}
+                onPress={() => setMethod(item.value)}
+              >
+                <Text style={[styles.methodLabel, method === item.value && styles.methodLabelSelected]}>
+                  {item.label}
+                </Text>
+                <Text style={[styles.methodDesc, method === item.value && styles.methodDescSelected]}>
+                  {item.description}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
 
           <View style={styles.totalBox}>
-            <Text style={styles.totalLabel}>Amount due</Text>
+            <Text style={styles.totalLabel}>You receive (estimate)</Text>
             <Text style={styles.totalAmount}>
-              {payment.symbol}{total.toFixed(0)}
+              {payout.symbol}{total.toFixed(0)}
             </Text>
           </View>
 
-          <Pressable style={styles.payButton} onPress={handlePay}>
-            <Text style={styles.payButtonText}>Pay with UPI</Text>
-          </Pressable>
+          <Link href="/schedule" asChild>
+            <Pressable style={styles.ctaButton}>
+              <Text style={styles.ctaButtonText}>Schedule pickup & get paid</Text>
+            </Pressable>
+          </Link>
 
-          <Text style={styles.cashNote}>{payment.cashNote}</Text>
-          <Text style={styles.upiId}>UPI ID: {payment.upiId}</Text>
+          <Text style={styles.note}>{payout.note}</Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -125,6 +133,49 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: 20,
   },
+  flowCard: {
+    backgroundColor: colors.white,
+    borderRadius: radius.lg,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadow.card,
+  },
+  flowRow: {
+    flexDirection: "row",
+    gap: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  flowRowLast: { borderBottomWidth: 0 },
+  flowNumber: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.mint,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  flowNumberText: {
+    fontFamily: fonts.heading,
+    color: colors.primary,
+    fontSize: 14,
+  },
+  flowContent: { flex: 1 },
+  flowTitle: {
+    fontFamily: fonts.bodySemi,
+    color: colors.dark,
+    fontSize: 15,
+  },
+  flowDescription: {
+    fontFamily: fonts.body,
+    color: colors.muted,
+    fontSize: 13,
+    marginTop: 2,
+    lineHeight: 18,
+  },
   card: {
     backgroundColor: colors.white,
     borderRadius: radius.lg,
@@ -132,6 +183,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     ...shadow.card,
+  },
+  cardTitle: {
+    fontFamily: fonts.headingSemi,
+    fontSize: 18,
+    color: colors.dark,
+    marginBottom: 16,
   },
   label: {
     fontSize: 14,
@@ -170,6 +227,33 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 12,
   },
+  methodRow: { flexDirection: "row", gap: 10, marginBottom: 16 },
+  methodCard: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    padding: 12,
+    backgroundColor: colors.cream,
+  },
+  methodCardSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.mint,
+  },
+  methodLabel: {
+    fontFamily: fonts.bodySemi,
+    color: colors.dark,
+    fontSize: 15,
+  },
+  methodLabelSelected: { color: colors.primary },
+  methodDesc: {
+    fontFamily: fonts.body,
+    color: colors.muted,
+    fontSize: 11,
+    marginTop: 4,
+    lineHeight: 15,
+  },
+  methodDescSelected: { color: colors.dark },
   totalBox: {
     backgroundColor: colors.mint,
     borderRadius: radius.md,
@@ -177,31 +261,23 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 8,
     marginBottom: 16,
   },
   totalLabel: { fontFamily: fonts.bodySemi, color: colors.dark, fontSize: 16 },
   totalAmount: { fontFamily: fonts.heading, color: colors.dark, fontSize: 28 },
-  payButton: {
+  ctaButton: {
     backgroundColor: colors.primary,
     borderRadius: radius.md,
     paddingVertical: 15,
     alignItems: "center",
   },
-  payButtonText: { color: colors.white, fontFamily: fonts.bodySemi, fontSize: 16 },
-  cashNote: {
+  ctaButtonText: { color: colors.white, fontFamily: fonts.bodySemi, fontSize: 16 },
+  note: {
     marginTop: 14,
     fontFamily: fonts.body,
     color: colors.muted,
-    fontSize: 13,
-    lineHeight: 20,
-    textAlign: "center",
-  },
-  upiId: {
-    marginTop: 6,
-    fontFamily: fonts.bodyMedium,
-    color: colors.primary,
-    fontSize: 13,
+    fontSize: 12,
+    lineHeight: 18,
     textAlign: "center",
   },
 });

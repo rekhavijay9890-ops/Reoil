@@ -11,7 +11,7 @@
     },
     {
       "title": "We collect",
-      "description": "Our team picks up your used oil in sealed containers — no mess, no hassle."
+      "description": "Our team picks up your used oil, weighs it, and pays you cash or UPI on the spot."
     },
     {
       "title": "Recycle & reuse",
@@ -37,18 +37,26 @@
     "supportHours": "Monday – Saturday, 9 AM – 6 PM",
     "whatsappMessage": "Hi Reoil, I need help with my oil pickup."
   },
-  "payment": {
+  "payout": {
     "currency": "INR",
     "symbol": "₹",
-    "upiId": "reoil@upi",
-    "upiName": "Reoil Collections",
+    "title": "Get paid for your oil",
+    "subtitle": "You give us used cooking oil — we pay you when we collect it.",
     "rates": {
-      "home": 8,
-      "restaurant": 6,
-      "commercial": 5
+      "home": 12,
+      "restaurant": 15,
+      "commercial": 14
     },
     "rateUnit": "per liter",
-    "cashNote": "Prefer cash? Pay our collector directly when we pick up your oil.",
-    "subtitle": "Pay after we collect your used oil. Rates depend on property type and volume."
+    "methods": [
+      { "label": "Cash", "value": "cash", "description": "Paid in hand when we pick up" },
+      { "label": "UPI", "value": "upi", "description": "Transferred to your UPI ID on the spot" }
+    ],
+    "flow": [
+      { "step": 1, "title": "You give us oil", "description": "Hand over your used cooking oil at pickup" },
+      { "step": 2, "title": "We weigh it", "description": "Our collector measures the exact liters" },
+      { "step": 3, "title": "You get paid", "description": "Receive cash or UPI immediately — no waiting" }
+    ],
+    "note": "Final amount is based on actual liters weighed at pickup. Rates may vary for very large volumes."
   }
 }

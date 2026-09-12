@@ -42,7 +42,7 @@ export default function Home() {
               href="/payment"
               className={cn(buttonVariants({ variant: "secondary", size: "sm" }))}
             >
-              Pay for collection
+              Get paid for your oil
             </Link>
             <Link
               href="/contact"

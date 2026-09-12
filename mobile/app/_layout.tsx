@@ -51,7 +51,7 @@ export default function RootLayout() {
         />
         <Stack.Screen
           name="payment"
-          options={{ title: "Pay for collection", presentation: "card" }}
+          options={{ title: "Get paid for oil", presentation: "card" }}
         />
         <Stack.Screen
           name="contact"

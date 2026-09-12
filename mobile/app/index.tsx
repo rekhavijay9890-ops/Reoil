@@ -47,9 +47,9 @@ export default function HomeScreen() {
           <View style={styles.quickActions}>
             <Link href="/payment" asChild>
               <Pressable style={styles.quickCard}>
-                <Text style={styles.quickIcon}>💳</Text>
-                <Text style={styles.quickTitle}>Pay</Text>
-                <Text style={styles.quickSubtitle}>After collection</Text>
+                <Text style={styles.quickIcon}>💵</Text>
+                <Text style={styles.quickTitle}>Get paid</Text>
+                <Text style={styles.quickSubtitle}>Cash for your oil</Text>
               </Pressable>
             </Link>
             <Link href="/contact" asChild>

@@ -1,5 +1,5 @@
 import { Alert, Linking } from "react-native";
-import { contact, payment } from "./content";
+import { contact } from "./content";
 
 export async function openWhatsApp() {
   const url = `whatsapp://send?phone=${contact.whatsapp}&text=${encodeURIComponent(contact.whatsappMessage)}`;
@@ -15,32 +15,6 @@ export async function openPhoneCall() {
 
   if (!canOpen) {
     Alert.alert("Cannot call", `Dial ${contact.displayPhone} from your phone.`);
-    return;
-  }
-
-  await Linking.openURL(url);
-}
-
-export function buildUpiUrl(amount: number, note: string) {
-  const params = new URLSearchParams({
-    pa: payment.upiId,
-    pn: payment.upiName,
-    am: amount.toFixed(2),
-    cu: payment.currency,
-    tn: note,
-  });
-  return `upi://pay?${params.toString()}`;
-}
-
-export async function openUpiPayment(amount: number, note: string) {
-  const url = buildUpiUrl(amount, note);
-  const canOpen = await Linking.canOpenURL(url);
-
-  if (!canOpen) {
-    Alert.alert(
-      "UPI app not found",
-      `Pay ${payment.symbol}${amount.toFixed(0)} to ${payment.upiId} using any UPI app.`,
-    );
     return;
   }
 
