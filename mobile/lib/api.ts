@@ -1,6 +1,5 @@
-const API_URL =
-  process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "") ??
-  "https://reoil-ten.vercel.app";
+// Hardcoded for release APK — must use HTTPS for real devices
+export const API_URL = "https://reoil-ten.vercel.app";
 
 export type PickupPayload = {
   name: string;

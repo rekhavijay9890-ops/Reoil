@@ -11,7 +11,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { submitPickup } from "../lib/api";
+import { API_URL, submitPickup } from "../lib/api";
 import { propertyTypes, quantities } from "../lib/content";
 import { colors } from "../constants/theme";
 
@@ -131,6 +131,8 @@ export default function ScheduleScreen() {
             <Text style={styles.primaryButtonText}>Request pickup</Text>
           )}
         </Pressable>
+
+        <Text style={styles.versionText}>Reoil v1.0.2 · {API_URL}</Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -222,6 +224,12 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.7 },
   primaryButtonText: { color: colors.white, fontWeight: "700", fontSize: 16 },
+  versionText: {
+    marginTop: 16,
+    fontSize: 11,
+    color: colors.muted,
+    textAlign: "center",
+  },
   successContainer: {
     flex: 1,
     backgroundColor: colors.cream,
