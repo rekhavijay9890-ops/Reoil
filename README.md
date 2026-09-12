@@ -2,76 +2,96 @@
 
 Used cooking oil collection — web app + Android mobile app for booking oil pickups.
 
-## Web app
+## Features
+
+- Landing page with impact stats and how-it-works steps
+- Pickup booking form (web + mobile via Expo Go or APK)
+- Admin dashboard at `/admin` to view all pickup requests
+- Shared content between web and mobile (`shared/content.json`)
+- Optional webhook notifications on new pickups
+
+## Quick start
+
+### Web app
 
 ```bash
+cp .env.example .env
 npm install
 npm run dev
 ```
 
 Open [http://localhost:4318](http://localhost:4318)
 
-## Mobile app (Android)
+### Mobile (Expo Go — no APK needed)
 
 ```bash
-cd mobile
-npm install
-cp .env.example .env
-npm start
-```
-
-Scan the QR code with **Expo Go** on your phone, or press `a` for Android emulator.
-
-### API connection
-
-The mobile app calls the Next.js API. Start the web server first:
-
-```bash
+# Terminal 1 — API
 npm run dev
+
+# Terminal 2 — mobile
+cd mobile
+cp .env.example .env
+# Set EXPO_PUBLIC_API_URL to your public API URL
+npm install --legacy-peer-deps
+npm run start:tunnel
 ```
 
-Set `EXPO_PUBLIC_API_URL` in `mobile/.env`:
+Scan the QR code with **Expo Go** on your phone.
 
-| Device | API URL |
-|--------|---------|
-| Android emulator | `http://10.0.2.2:4318` |
-| Physical phone (same Wi-Fi) | `http://YOUR_COMPUTER_IP:4318` |
-| Production | `https://your-deployed-url.vercel.app` |
+### Admin dashboard
 
-### Build test APK
+1. Set `ADMIN_KEY` in `.env`
+2. Open [http://localhost:4318/admin](http://localhost:4318/admin)
+3. Enter your admin key and click **Load pickups**
 
-**Option A — Local build (Codespace / Linux):**
+## Environment variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `ADMIN_KEY` | Production | Protects `/admin` and `GET /api/pickup` |
+| `PICKUP_WEBHOOK_URL` | Optional | Webhook called on new pickup (Slack, Zapier, etc.) |
+| `EXPO_PUBLIC_API_URL` | Mobile | API base URL (in `mobile/.env`) |
+
+## Build standalone APK
 
 ```bash
 npm run mobile:apk
 ```
 
-Output: `reoil-debug.apk` in the project root.
+Output: `reoil.apk` (release build with JS bundled — works without Metro).
 
-If build fails with out-of-memory, retry after the script patches Gradle for arm64-only builds.
-
-**Option B — Cloud build (recommended if local fails):**
-
-```bash
-cd mobile
-npx eas-cli login
-npx eas-cli build --platform android --profile preview
-```
-
-Download the APK from the link Expo provides — no Android SDK needed.
+Requires Java 17 and Android SDK. See `scripts/build-android-apk.sh`.
 
 ## Project structure
 
 ```
-src/                 Next.js web app
-mobile/              Expo React Native app
-mobile/app/          Mobile screens (home + schedule)
-data/pickups.json    Saved pickup requests (created at runtime)
+shared/content.json     Stats, steps, form options (web + mobile)
+src/                    Next.js web app
+src/app/admin/          Admin pickup dashboard
+src/app/api/pickup/     Booking API (POST public, GET admin-only)
+data/pickups.json       Saved requests (local dev only)
+mobile/                 Expo React Native app
+scripts/                APK build script
 ```
 
-## Features
+## Production deployment
 
-- Landing page with impact stats and how-it-works steps
-- Pickup booking form (web + mobile)
-- Shared API at `/api/pickup` with CORS for mobile
-- Pickup requests saved to `data/pickups.json`
+**Web:** Deploy to Vercel via Publish button or `git push`.
+
+**Important:** File-based storage (`data/pickups.json`) does not persist on serverless hosts. For production you need either:
+
+- A database (Supabase, PlanetScale, etc.)
+- Or Vercel Blob / KV
+
+Provide database credentials to wire persistent storage.
+
+**Mobile:** Set `EXPO_PUBLIC_API_URL` in `mobile/.env` (Expo Go) or `mobile/eas.json` (cloud APK builds) to your deployed web URL.
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Web dev server (port 4318) |
+| `npm run build` | Production web build |
+| `npm run mobile` | Start Expo dev server |
+| `npm run mobile:apk` | Build standalone Android APK |

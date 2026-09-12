@@ -6,11 +6,17 @@
   "build": {
     "preview": {
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://your-reoil-app.vercel.app"
+      },
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://your-reoil-app.vercel.app"
+      },
       "android": {
         "buildType": "app-bundle"
       }

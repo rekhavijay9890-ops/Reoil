@@ -9,30 +9,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../constants/theme";
-
-const stats = [
-  { label: "Homes & restaurants served", value: "500+" },
-  { label: "Oil collected (liters)", value: "12,000+" },
-  { label: "CO₂ reduced (tons)", value: "8+" },
-];
-
-const steps = [
-  {
-    title: "Book a pickup",
-    description:
-      "Tell us your location and how much oil you have. We schedule a convenient time.",
-  },
-  {
-    title: "We collect",
-    description:
-      "Our team picks up your used oil in sealed containers — no mess, no hassle.",
-  },
-  {
-    title: "Recycle & reuse",
-    description:
-      "Your oil is processed into biofuel instead of polluting waterways.",
-  },
-];
+import { stats, steps } from "../lib/content";
 
 export default function HomeScreen() {
   return (

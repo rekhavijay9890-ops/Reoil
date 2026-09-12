@@ -1,17 +1,26 @@
 import { NextResponse } from "next/server";
+import { isAdminAuthorized } from "@/lib/auth";
+import { notifyPickupCreated } from "@/lib/notify";
 import { listPickups, savePickup } from "@/lib/pickup-store";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
 export async function OPTIONS() {
   return NextResponse.json({}, { headers: corsHeaders });
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  if (!isAdminAuthorized(request)) {
+    return NextResponse.json(
+      { error: "Unauthorized" },
+      { status: 401, headers: corsHeaders },
+    );
+  }
+
   const pickups = await listPickups();
   return NextResponse.json({ pickups }, { headers: corsHeaders });
 }
@@ -29,16 +38,16 @@ export async function POST(request: Request) {
   }
 
   const pickup = await savePickup({
-    name: String(name),
-    email: String(email),
-    phone: String(phone),
-    address: String(address),
+    name: String(name).trim(),
+    email: String(email).trim(),
+    phone: String(phone).trim(),
+    address: String(address).trim(),
     type: String(type),
     quantity: String(quantity),
-    notes: body.notes ? String(body.notes) : "",
+    notes: body.notes ? String(body.notes).trim() : "",
   });
 
-  console.log("[Reoil pickup request]", pickup);
+  await notifyPickupCreated(pickup);
 
   return NextResponse.json({ success: true, pickup }, { headers: corsHeaders });
 }

@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { propertyTypes, quantities } from "@/lib/content";
 import { CheckCircle2, Loader2 } from "lucide-react";
 
 type FormState = "idle" | "submitting" | "success" | "error";
@@ -121,9 +122,9 @@ export function PickupForm() {
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="home">Home</SelectItem>
-                  <SelectItem value="restaurant">Restaurant</SelectItem>
-                  <SelectItem value="commercial">Commercial kitchen</SelectItem>
+                  {propertyTypes.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -134,10 +135,9 @@ export function PickupForm() {
                   <SelectValue placeholder="Select amount" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="under-5">Under 5 liters</SelectItem>
-                  <SelectItem value="5-10">5–10 liters</SelectItem>
-                  <SelectItem value="10-25">10–25 liters</SelectItem>
-                  <SelectItem value="25+">25+ liters</SelectItem>
+                  {quantities.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

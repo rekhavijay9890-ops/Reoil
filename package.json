@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "mobile": "cd mobile && npm start",
+    "mobile": "cd mobile && npm run start:tunnel",
     "mobile:apk": "bash scripts/build-android-apk.sh"
   },
   "dependencies": {

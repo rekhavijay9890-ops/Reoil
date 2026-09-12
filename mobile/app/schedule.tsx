@@ -12,20 +12,8 @@ import {
   View,
 } from "react-native";
 import { submitPickup } from "../lib/api";
+import { propertyTypes, quantities } from "../lib/content";
 import { colors } from "../constants/theme";
-
-const propertyTypes = [
-  { label: "Home", value: "home" },
-  { label: "Restaurant", value: "restaurant" },
-  { label: "Commercial kitchen", value: "commercial" },
-];
-
-const quantities = [
-  { label: "Under 5 liters", value: "under-5" },
-  { label: "5–10 liters", value: "5-10" },
-  { label: "10–25 liters", value: "10-25" },
-  { label: "25+ liters", value: "25+" },
-];
 
 export default function ScheduleScreen() {
   const [name, setName] = useState("");

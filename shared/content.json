@@ -1,0 +1,32 @@
+{
+  "stats": [
+    { "label": "Homes & restaurants served", "value": "500+" },
+    { "label": "Oil collected (liters)", "value": "12,000+" },
+    { "label": "CO₂ reduced (tons)", "value": "8+" }
+  ],
+  "steps": [
+    {
+      "title": "Book a pickup",
+      "description": "Tell us your location and how much oil you have. We schedule a convenient time."
+    },
+    {
+      "title": "We collect",
+      "description": "Our team picks up your used oil in sealed containers — no mess, no hassle."
+    },
+    {
+      "title": "Recycle & reuse",
+      "description": "Your oil is processed into biofuel instead of polluting waterways."
+    }
+  ],
+  "propertyTypes": [
+    { "label": "Home", "value": "home" },
+    { "label": "Restaurant", "value": "restaurant" },
+    { "label": "Commercial kitchen", "value": "commercial" }
+  ],
+  "quantities": [
+    { "label": "Under 5 liters", "value": "under-5" },
+    { "label": "5–10 liters", "value": "5-10" },
+    { "label": "10–25 liters", "value": "10-25" },
+    { "label": "25+ liters", "value": "25+" }
+  ]
+}

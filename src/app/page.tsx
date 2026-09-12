@@ -1,32 +1,11 @@
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { stats, steps } from "@/lib/content";
 import { Card, CardContent } from "@/components/ui/card";
 import { Droplets, Leaf, Recycle, Truck } from "lucide-react";
 
-const stats = [
-  { label: "Homes & restaurants served", value: "500+" },
-  { label: "Oil collected (liters)", value: "12,000+" },
-  { label: "CO₂ reduced (tons)", value: "8+" },
-];
-
-const steps = [
-  {
-    icon: Truck,
-    title: "Book a pickup",
-    description: "Tell us your location and how much oil you have. We schedule a convenient time.",
-  },
-  {
-    icon: Droplets,
-    title: "We collect",
-    description: "Our team picks up your used oil in sealed containers — no mess, no hassle.",
-  },
-  {
-    icon: Recycle,
-    title: "Recycle & reuse",
-    description: "Your oil is processed into biofuel instead of polluting waterways.",
-  },
-];
+const stepIcons = [Truck, Droplets, Recycle];
 
 export default function Home() {
   return (
@@ -79,18 +58,21 @@ export default function Home() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <h2 className="text-center text-3xl font-bold text-reoil-dark">How it works</h2>
           <div className="mt-12 grid gap-6 sm:grid-cols-3">
-            {steps.map((step, i) => (
-              <Card key={step.title} className="text-center shadow-sm">
-                <CardContent className="pt-8 pb-6">
-                  <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-reoil-light text-white">
-                    <step.icon className="size-6" />
-                  </div>
-                  <span className="text-sm font-semibold text-reoil-light">Step {i + 1}</span>
-                  <h3 className="mt-1 text-lg font-semibold text-reoil-dark">{step.title}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">{step.description}</p>
-                </CardContent>
-              </Card>
-            ))}
+            {steps.map((step, i) => {
+              const Icon = stepIcons[i];
+              return (
+                <Card key={step.title} className="text-center shadow-sm">
+                  <CardContent className="pt-8 pb-6">
+                    <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-reoil-light text-white">
+                      <Icon className="size-6" />
+                    </div>
+                    <span className="text-sm font-semibold text-reoil-light">Step {i + 1}</span>
+                    <h3 className="mt-1 text-lg font-semibold text-reoil-dark">{step.title}</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">{step.description}</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </section>
