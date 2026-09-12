@@ -40,19 +40,25 @@ Set `EXPO_PUBLIC_API_URL` in `mobile/.env`:
 
 ### Build test APK
 
+**Option A — Local build (Codespace / Linux):**
+
 ```bash
 npm run mobile:apk
 ```
 
-Output: `reoil-debug.apk` in the project root. Transfer to your Android phone and install (enable "Install unknown apps" if prompted).
+Output: `reoil-debug.apk` in the project root.
 
-Alternative with Expo cloud build:
+If build fails with out-of-memory, retry after the script patches Gradle for arm64-only builds.
+
+**Option B — Cloud build (recommended if local fails):**
 
 ```bash
 cd mobile
 npx eas-cli login
 npx eas-cli build --platform android --profile preview
 ```
+
+Download the APK from the link Expo provides — no Android SDK needed.
 
 ## Project structure
 
