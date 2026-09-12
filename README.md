@@ -74,18 +74,23 @@ mobile/                 Expo React Native app
 scripts/                APK build script
 ```
 
+## Supabase database (production)
+
+See **[docs/SUPABASE.md](docs/SUPABASE.md)** for the full setup guide.
+
+Quick steps:
+1. Create free project at [supabase.com](https://supabase.com)
+2. Run `supabase/schema.sql` in SQL Editor
+3. Add `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` to `.env`
+4. Set `ADMIN_KEY` for the admin dashboard at `/admin`
+
+Without Supabase, pickups save to `data/pickups.json` (local dev only).
+
 ## Production deployment
 
-**Web:** Deploy to Vercel via Publish button or `git push`.
+**Web:** Deploy to Vercel via Publish button or `git push`. Add Supabase env vars in Vercel settings.
 
-**Important:** File-based storage (`data/pickups.json`) does not persist on serverless hosts. For production you need either:
-
-- A database (Supabase, PlanetScale, etc.)
-- Or Vercel Blob / KV
-
-Provide database credentials to wire persistent storage.
-
-**Mobile:** Set `EXPO_PUBLIC_API_URL` in `mobile/.env` (Expo Go) or `mobile/eas.json` (cloud APK builds) to your deployed web URL.
+**Mobile:** Set `EXPO_PUBLIC_API_URL` in `mobile/.env` (Expo Go) or `mobile/eas.json` (APK builds) to your deployed web URL.
 
 ## Scripts
 
