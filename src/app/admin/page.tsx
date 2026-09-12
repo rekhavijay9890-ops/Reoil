@@ -33,11 +33,15 @@ export default function AdminPage() {
         headers: { Authorization: `Bearer ${adminKey}` },
       });
 
-      if (!res.ok) {
-        throw new Error(res.status === 401 ? "Invalid admin key" : "Failed to load pickups");
-      }
-
       const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          res.status === 401
+            ? "Invalid admin key"
+            : data.error ?? "Failed to load pickups",
+        );
+      }
       setPickups(data.pickups);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load pickups");

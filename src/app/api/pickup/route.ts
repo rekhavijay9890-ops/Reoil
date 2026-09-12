@@ -21,8 +21,17 @@ export async function GET(request: Request) {
     );
   }
 
-  const pickups = await listPickups();
-  return NextResponse.json({ pickups }, { headers: corsHeaders });
+  try {
+    const pickups = await listPickups();
+    return NextResponse.json({ pickups }, { headers: corsHeaders });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to load pickups";
+    console.error("[Reoil] GET /api/pickup failed:", message);
+    return NextResponse.json(
+      { error: message },
+      { status: 500, headers: corsHeaders },
+    );
+  }
 }
 
 export async function POST(request: Request) {
