@@ -3,6 +3,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { stats, steps } from "@/lib/content";
 import { Card, CardContent } from "@/components/ui/card";
+import { HomeExtras } from "@/components/home-extras";
 import { Droplets, Leaf, Recycle, Truck } from "lucide-react";
 
 const stepIcons = [Truck, Droplets, Recycle];
@@ -35,20 +36,6 @@ export default function Home() {
               className={cn(buttonVariants({ variant: "outline", size: "lg" }), "border-reoil/20")}
             >
               Learn more
-            </Link>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <Link
-              href="/payment"
-              className={cn(buttonVariants({ variant: "secondary", size: "sm" }))}
-            >
-              Get paid for your oil
-            </Link>
-            <Link
-              href="/contact"
-              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-reoil")}
-            >
-              WhatsApp & call support
             </Link>
           </div>
         </div>
@@ -109,6 +96,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <HomeExtras />
 
       <section id="impact" className="relative overflow-hidden bg-reoil-dark py-16 text-white sm:py-24">
         <div

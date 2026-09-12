@@ -1,17 +1,44 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { Link } from "expo-router";
+import { useMemo, useState } from "react";
 import {
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, fonts, radius, shadow } from "../constants/theme";
-import { stats, steps } from "../lib/content";
+import { openPhoneCall, openWhatsApp } from "../lib/contact-actions";
+import { contact, payout, propertyTypes, stats, steps } from "../lib/content";
 
 export default function HomeScreen() {
+  const [type, setType] = useState("home");
+  const [liters, setLiters] = useState("10");
+
+  const rate = payout.rates[type as keyof typeof payout.rates] ?? payout.rates.home;
+  const litersNum = Math.max(0, Number.parseFloat(liters) || 0);
+  const estimatedPayout = useMemo(() => litersNum * rate, [litersNum, rate]);
+
+  async function handleWhatsApp() {
+    try {
+      await openWhatsApp();
+    } catch {
+      Alert.alert("WhatsApp", `Message us at ${contact.displayPhone}`);
+    }
+  }
+
+  async function handleCall() {
+    try {
+      await openPhoneCall();
+    } catch {
+      Alert.alert("Call", `Dial ${contact.displayPhone}`);
+    }
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -40,23 +67,6 @@ export default function HomeScreen() {
             <Link href="/schedule" asChild>
               <Pressable style={styles.primaryButton}>
                 <Text style={styles.primaryButtonText}>Schedule a pickup</Text>
-              </Pressable>
-            </Link>
-          </View>
-
-          <View style={styles.quickActions}>
-            <Link href="/payment" asChild>
-              <Pressable style={styles.quickCard}>
-                <Text style={styles.quickIcon}>💵</Text>
-                <Text style={styles.quickTitle}>Get paid</Text>
-                <Text style={styles.quickSubtitle}>Cash for your oil</Text>
-              </Pressable>
-            </Link>
-            <Link href="/contact" asChild>
-              <Pressable style={styles.quickCard}>
-                <Text style={styles.quickIcon}>💬</Text>
-                <Text style={styles.quickTitle}>Help</Text>
-                <Text style={styles.quickSubtitle}>WhatsApp & call</Text>
               </Pressable>
             </Link>
           </View>
@@ -91,6 +101,64 @@ export default function HomeScreen() {
             <Text style={styles.stepDescription}>{step.description}</Text>
           </View>
         ))}
+
+        <View style={styles.stepCard}>
+          <Text style={styles.stepLabel}>Payout</Text>
+          <Text style={styles.stepTitle}>{payout.title}</Text>
+          <Text style={styles.stepDescription}>{payout.subtitle}</Text>
+
+          <View style={styles.chipRow}>
+            {propertyTypes.map((item) => (
+              <Pressable
+                key={item.value}
+                style={[styles.chip, type === item.value && styles.chipSelected]}
+                onPress={() => setType(item.value)}
+              >
+                <Text style={[styles.chipText, type === item.value && styles.chipTextSelected]}>
+                  {item.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <Text style={styles.rateText}>
+            We pay {payout.symbol}{rate} {payout.rateUnit}
+          </Text>
+
+          <Text style={styles.inputLabel}>Estimated liters</Text>
+          <TextInput
+            style={styles.input}
+            value={liters}
+            onChangeText={setLiters}
+            keyboardType="decimal-pad"
+            placeholder="e.g. 10"
+            placeholderTextColor={colors.muted}
+          />
+
+          <View style={styles.payoutBox}>
+            <Text style={styles.payoutLabel}>You receive (estimate)</Text>
+            <Text style={styles.payoutAmount}>
+              {payout.symbol}{estimatedPayout.toFixed(0)}
+            </Text>
+          </View>
+          <Text style={styles.payoutNote}>{payout.note}</Text>
+        </View>
+
+        <View style={styles.stepCard}>
+          <Text style={styles.stepLabel}>Support</Text>
+          <Text style={styles.stepTitle}>Need help?</Text>
+          <Text style={styles.stepDescription}>
+            Chat on WhatsApp or call us for pickup, payout, or schedule questions.
+          </Text>
+
+          <Pressable style={styles.whatsappButton} onPress={handleWhatsApp}>
+            <Text style={styles.whatsappButtonText}>💬 Chat on WhatsApp</Text>
+          </Pressable>
+          <Pressable style={styles.callButton} onPress={handleCall}>
+            <Text style={styles.callButtonText}>📞 Call {contact.displayPhone}</Text>
+          </Pressable>
+          <Text style={styles.supportHours}>{contact.supportHours}</Text>
+        </View>
 
         <LinearGradient
           colors={[colors.dark, colors.primary]}
@@ -161,32 +229,6 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   actions: { marginTop: 22 },
-  quickActions: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 14,
-  },
-  quickCard: {
-    flex: 1,
-    backgroundColor: colors.white,
-    borderRadius: radius.lg,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...shadow.card,
-  },
-  quickIcon: { fontSize: 24, marginBottom: 6 },
-  quickTitle: {
-    fontFamily: fonts.headingSemi,
-    fontSize: 16,
-    color: colors.dark,
-  },
-  quickSubtitle: {
-    fontFamily: fonts.body,
-    fontSize: 12,
-    color: colors.muted,
-    marginTop: 2,
-  },
   primaryButton: {
     backgroundColor: colors.primary,
     borderRadius: radius.md,
@@ -283,6 +325,92 @@ const styles = StyleSheet.create({
     color: colors.muted,
     lineHeight: 22,
     fontSize: 14,
+    marginBottom: 12,
+  },
+  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 10 },
+  chip: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.cream,
+    borderRadius: radius.pill,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  chipSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipText: { color: colors.muted, fontFamily: fonts.bodySemi, fontSize: 13 },
+  chipTextSelected: { color: colors.white },
+  rateText: {
+    fontFamily: fonts.bodyMedium,
+    color: colors.primary,
+    fontSize: 14,
+    marginBottom: 12,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontFamily: fonts.bodySemi,
+    color: colors.dark,
+    marginBottom: 6,
+  },
+  input: {
+    backgroundColor: colors.cream,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+    fontFamily: fonts.body,
+    color: colors.text,
+    marginBottom: 12,
+  },
+  payoutBox: {
+    backgroundColor: colors.mint,
+    borderRadius: radius.md,
+    padding: 14,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  payoutLabel: { fontFamily: fonts.bodySemi, color: colors.dark, fontSize: 15 },
+  payoutAmount: { fontFamily: fonts.heading, color: colors.dark, fontSize: 24 },
+  payoutNote: {
+    marginTop: 10,
+    fontFamily: fonts.body,
+    color: colors.muted,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  whatsappButton: {
+    backgroundColor: "#25D366",
+    borderRadius: radius.md,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  whatsappButtonText: {
+    color: colors.white,
+    fontFamily: fonts.bodySemi,
+    fontSize: 15,
+  },
+  callButton: {
+    backgroundColor: colors.mint,
+    borderRadius: radius.md,
+    paddingVertical: 14,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  callButtonText: {
+    color: colors.dark,
+    fontFamily: fonts.bodySemi,
+    fontSize: 15,
+  },
+  supportHours: {
+    marginTop: 12,
+    fontFamily: fonts.body,
+    color: colors.muted,
+    fontSize: 12,
+    textAlign: "center",
   },
   ctaCard: {
     borderRadius: radius.xl,

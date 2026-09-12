@@ -49,14 +49,6 @@ export default function RootLayout() {
           name="schedule"
           options={{ title: "Schedule pickup", presentation: "card" }}
         />
-        <Stack.Screen
-          name="payment"
-          options={{ title: "Get paid for oil", presentation: "card" }}
-        />
-        <Stack.Screen
-          name="contact"
-          options={{ title: "Contact us", presentation: "card" }}
-        />
       </Stack>
     </>
   );
