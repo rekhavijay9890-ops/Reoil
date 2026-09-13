@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "Reoil Collector",
+    "slug": "reoil-collector",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "reoil-collector",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1b4332"
+    },
+    "android": {
+      "package": "com.reoil.collector",
+      "adaptiveIcon": {
+        "backgroundColor": "#1b4332",
+        "foregroundImage": "./assets/android-icon-foreground.png"
+      }
+    },
+    "plugins": ["expo-router", "expo-font", "expo-secure-store"]
+  }
+}

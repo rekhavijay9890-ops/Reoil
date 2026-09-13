@@ -36,15 +36,27 @@ type Pickup = {
   proposedRatePerLitre?: number;
   agreedRatePerLitre?: number;
   negotiable?: boolean;
+  collectorId?: string | null;
+  litersCollected?: number;
+};
+
+type Collector = {
+  id: string;
+  name: string;
+  phone: string;
 };
 
 export default function AdminPage() {
   const [adminKey, setAdminKey] = useState("");
   const [pickups, setPickups] = useState<Pickup[]>([]);
+  const [collectors, setCollectors] = useState<Collector[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [newCollectorName, setNewCollectorName] = useState("");
+  const [newCollectorPhone, setNewCollectorPhone] = useState("");
+  const [newCollectorPassword, setNewCollectorPassword] = useState("");
 
   const loadPickups = useCallback(async () => {
     setLoading(true);
@@ -58,6 +70,11 @@ export default function AdminPage() {
         throw new Error(res.status === 401 ? "Invalid admin key" : data.error ?? "Failed to load");
       }
       setPickups(data.pickups);
+      const colRes = await fetch("/api/admin/collectors", {
+        headers: { Authorization: `Bearer ${adminKey}` },
+      });
+      const colData = await colRes.json();
+      if (colRes.ok) setCollectors(colData.collectors ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load pickups");
       setPickups([]);
@@ -81,11 +98,22 @@ export default function AdminPage() {
           earningsInr: updates.earningsInr,
           litersEstimated: updates.litersEstimated,
           agreedRatePerLitre: updates.agreedRatePerLitre,
+          collectorId: updates.collectorId ?? "",
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Update failed");
-      setPickups((prev) => prev.map((p) => (p.id === id ? { ...p, ...data.pickup } : p)));
+      setPickups((prev) =>
+        prev.map((p) =>
+          p.id === id
+            ? {
+                ...p,
+                ...data.pickup,
+                collectorId: data.pickup.collectorId ?? undefined,
+              }
+            : p,
+        ),
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Update failed");
     } finally {
@@ -101,6 +129,32 @@ export default function AdminPage() {
 
   const filtered =
     statusFilter === "all" ? pickups : pickups.filter((p) => p.status === statusFilter);
+
+  async function createCollectorAccount() {
+    setError("");
+    try {
+      const res = await fetch("/api/admin/collectors", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${adminKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: newCollectorName,
+          phone: newCollectorPhone,
+          password: newCollectorPassword,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to create collector");
+      setCollectors((prev) => [...prev, data.collector]);
+      setNewCollectorName("");
+      setNewCollectorPhone("");
+      setNewCollectorPassword("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create collector");
+    }
+  }
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
@@ -136,6 +190,27 @@ export default function AdminPage() {
           <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Pending</p><p className="text-2xl font-bold text-amber-600">{pending}</p></CardContent></Card>
           <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Liters collected</p><p className="text-2xl font-bold text-reoil">{totalLiters} L</p></CardContent></Card>
         </div>
+      )}
+
+      {adminKey && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="font-heading text-lg">Delivery staff</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3 sm:grid-cols-4">
+            <Input placeholder="Name" value={newCollectorName} onChange={(e) => setNewCollectorName(e.target.value)} />
+            <Input placeholder="Phone" value={newCollectorPhone} onChange={(e) => setNewCollectorPhone(e.target.value)} />
+            <Input placeholder="Password" type="password" value={newCollectorPassword} onChange={(e) => setNewCollectorPassword(e.target.value)} />
+            <Button onClick={createCollectorAccount} disabled={!newCollectorName || !newCollectorPhone || !newCollectorPassword}>
+              Add collector
+            </Button>
+          </CardContent>
+          {collectors.length > 0 && (
+            <CardContent className="pt-0 text-sm text-muted-foreground">
+              Active: {collectors.map((c) => `${c.name} (${c.phone})`).join(", ")}
+            </CardContent>
+          )}
+        </Card>
       )}
 
       {error && <p className="mt-4 text-sm text-destructive" role="alert">{error}</p>}
@@ -180,6 +255,26 @@ export default function AdminPage() {
                   </p>
                 </div>
                 <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label>Assign collector</Label>
+                    <Select
+                      value={pickup.collectorId ?? "none"}
+                      onValueChange={(value) => {
+                        const collectorId = value === "none" ? undefined : value;
+                        setPickups((prev) =>
+                          prev.map((p) => (p.id === pickup.id ? { ...p, collectorId } : p)),
+                        );
+                      }}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Select collector" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Unassigned</SelectItem>
+                        {collectors.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>{c.name} · {c.phone}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div className="space-y-2">
                     <Label>Status</Label>
                     <Select
@@ -259,6 +354,7 @@ export default function AdminPage() {
                         litersEstimated: pickup.litersEstimated,
                         earningsInr: pickup.earningsInr,
                         agreedRatePerLitre: pickup.agreedRatePerLitre,
+                        collectorId: pickup.collectorId,
                       })
                     }
                   >

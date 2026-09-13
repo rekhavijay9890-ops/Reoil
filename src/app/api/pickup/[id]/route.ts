@@ -68,6 +68,7 @@ export async function PATCH(
       agreedRatePerLitre: body.agreedRatePerLitre != null
         ? Number(body.agreedRatePerLitre)
         : undefined,
+      collectorId: body.collectorId !== undefined ? String(body.collectorId) : undefined,
     });
 
     if (status && status !== existing.status) {

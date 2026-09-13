@@ -33,6 +33,8 @@ export type PickupRequest = {
   proposedRatePerLitre?: number;
   agreedRatePerLitre?: number;
   negotiable?: boolean;
+  collectorId?: string;
+  litersCollected?: number;
 };
 
 const DATA_FILE = path.join(process.cwd(), "data", "pickups.json");
@@ -58,6 +60,8 @@ type PickupRow = {
   proposed_rate_per_litre?: number | null;
   agreed_rate_per_litre?: number | null;
   negotiable?: boolean | null;
+  collector_id?: string | null;
+  liters_collected?: number | null;
 };
 
 function rowToPickup(row: PickupRow): PickupRequest {
@@ -82,6 +86,8 @@ function rowToPickup(row: PickupRow): PickupRequest {
     proposedRatePerLitre: row.proposed_rate_per_litre ?? undefined,
     agreedRatePerLitre: row.agreed_rate_per_litre ?? undefined,
     negotiable: row.negotiable ?? undefined,
+    collectorId: row.collector_id ?? undefined,
+    litersCollected: row.liters_collected ?? undefined,
   };
 }
 
@@ -261,7 +267,12 @@ export async function updatePickup(
   updates: Partial<
     Pick<
       PickupRequest,
-      "status" | "earningsInr" | "litersEstimated" | "agreedRatePerLitre"
+      | "status"
+      | "earningsInr"
+      | "litersEstimated"
+      | "agreedRatePerLitre"
+      | "collectorId"
+      | "litersCollected"
     >
   >,
 ): Promise<PickupRequest> {
@@ -274,6 +285,8 @@ export async function updatePickup(
   if (updates.earningsInr != null) payload.earnings_inr = updates.earningsInr;
   if (updates.litersEstimated != null) payload.liters_estimated = updates.litersEstimated;
   if (updates.agreedRatePerLitre != null) payload.agreed_rate_per_litre = updates.agreedRatePerLitre;
+  if (updates.collectorId !== undefined) payload.collector_id = updates.collectorId || null;
+  if (updates.litersCollected != null) payload.liters_collected = updates.litersCollected;
 
   const { data, error } = await supabase
     .from("pickups")
@@ -366,4 +379,23 @@ export async function getBusinessStats(profileId: string) {
       .filter((p) => p.status === "completed")
       .reduce((s, p) => s + p.litersEstimated, 0),
   };
+}
+
+const COLLECTOR_ACTIVE_STATUSES: PickupStatus[] = [
+  "assigned",
+  "on_the_way",
+  "collected",
+];
+
+export async function listPickupsForCollector(collectorId: string): Promise<PickupRequest[]> {
+  if (!isSupabaseConfigured()) return [];
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("pickups")
+    .select("*")
+    .eq("collector_id", collectorId)
+    .in("status", COLLECTOR_ACTIVE_STATUSES)
+    .order("received_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data as PickupRow[]).map(rowToPickup);
 }

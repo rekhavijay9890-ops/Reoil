@@ -33,6 +33,18 @@ You can:
 
 Summary cards show: total bookings, pending count, liters collected.
 
+## Delivery collector app
+
+A separate app for field staff (`collector/` folder).
+
+1. Admin creates collector accounts in `/admin` → **Delivery staff**
+2. Admin assigns a collector + sets status **assigned**
+3. Collector logs in on **Reoil Collector** app
+4. Collector: Start trip → Mark collected (enters liters)
+5. Admin marks **completed** with final earnings
+
+See `docs/COLLECTOR.md` for full setup.
+
 ## Status change notifications
 
 When you change status in admin:
