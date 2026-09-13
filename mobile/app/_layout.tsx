@@ -46,7 +46,13 @@ export default function RootLayout() {
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
           <Stack.Screen name="login" />
+          <Stack.Screen name="login-collector" options={{ presentation: "card" }} />
           <Stack.Screen name="register" options={{ presentation: "card" }} />
+          <Stack.Screen name="(collector)" />
+          <Stack.Screen
+            name="collector-job/[id]"
+            options={{ presentation: "card", headerShown: true, title: "Pickup job" }}
+          />
           <Stack.Screen name="forgot-password" options={{ presentation: "card" }} />
           <Stack.Screen name="addresses" options={{ presentation: "card" }} />
           <Stack.Screen name="business" options={{ presentation: "card" }} />

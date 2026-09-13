@@ -224,3 +224,57 @@ export async function deleteAddress(token: string, id: string) {
   const body = await parseJson(response);
   if (!response.ok) throw new Error(body.error ?? "Failed to delete address");
 }
+
+// --- Collector (delivery staff) APIs ---
+
+export type CollectorJob = {
+  id: string;
+  name: string;
+  phone: string;
+  address: string;
+  type: string;
+  quantity: string;
+  notes: string;
+  status: string;
+  preferredDate?: string;
+  preferredTime?: string;
+  litersEstimated: number;
+  lat?: number;
+  lng?: number;
+};
+
+export async function loginCollector(phone: string, password: string) {
+  const response = await fetch(`${API_URL}/api/collector/auth/login`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ phone, password }),
+  });
+  const body = await parseJson(response);
+  if (!response.ok) throw new Error(body.error ?? "Login failed");
+  return body as { token: string; collector: { id: string; phone: string; name: string } };
+}
+
+export async function fetchCollectorJobs(token: string) {
+  const response = await fetch(`${API_URL}/api/collector/pickups`, {
+    headers: authHeaders(token),
+  });
+  const body = await parseJson(response);
+  if (!response.ok) throw new Error(body.error ?? "Failed to load jobs");
+  return (body.pickups ?? []) as CollectorJob[];
+}
+
+export async function updateCollectorJob(
+  id: string,
+  token: string,
+  action: "start_trip" | "mark_collected",
+  litersCollected?: number,
+) {
+  const response = await fetch(`${API_URL}/api/collector/pickup/${id}`, {
+    method: "PATCH",
+    headers: authHeaders(token),
+    body: JSON.stringify({ action, litersCollected }),
+  });
+  const body = await parseJson(response);
+  if (!response.ok) throw new Error(body.error ?? "Update failed");
+  return body.pickup as CollectorJob;
+}

@@ -10,7 +10,9 @@ export default function SplashScreen() {
   useEffect(() => {
     if (loading) return;
     const timer = setTimeout(() => {
-      if (user) {
+      if (user?.role === "collector") {
+        router.replace("/(collector)/jobs");
+      } else if (user) {
         router.replace("/(tabs)/home");
       } else {
         router.replace("/login");

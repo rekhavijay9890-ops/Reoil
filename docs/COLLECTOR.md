@@ -1,70 +1,43 @@
-# Reoil Collector App — Delivery staff
+# Delivery staff (collector) — built into the Reoil app
 
-A separate mobile app for delivery boys / field collectors who pick up used oil from customers.
+Delivery boys use the **same Reoil APK** as customers. They sign in via a separate staff login.
 
-## Setup
+## How to sign in
 
-### 1. Run database migration
+1. Open the **Reoil** app
+2. On the login screen, tap **🚚 Delivery staff login**
+3. Enter phone + password (created by admin)
 
-In Supabase SQL Editor, run after phase 4:
+Staff see **Jobs** and **Profile** tabs — not the customer home/bookings screens.
 
+## Admin setup
+
+### 1. Run SQL (if not done)
 ```
 supabase/schema-phase5.sql
 ```
 
-### 2. Create a collector account
+### 2. Create collector account
+**Admin dashboard** → **Delivery staff** → add name, phone, password
 
-In **Admin dashboard** (`/admin`):
-1. Enter admin key → Load pickups
-2. Scroll to **Delivery staff**
-3. Add name, phone, password → **Add collector**
+### 3. Assign pickup
+Pick a collector → set status **assigned** → Save
 
-### 3. Assign pickups
-
-For each booking in admin:
-1. Select a **collector** from the dropdown
-2. Set status to **assigned**
-3. Click **Save changes**
-
-The collector will see the job in their app.
-
-## Collector app flow
+## Collector workflow
 
 ```
-Admin assigns pickup → status: assigned
-        ↓
-Collector opens app → sees job
-        ↓
-Start trip → status: on_the_way (customer notified)
-        ↓
-Mark collected + enter liters → status: collected
-        ↓
-Admin sets earnings → status: completed
+assigned → Start trip → on_the_way
+on_the_way → Enter liters → collected
+Admin → completed (customer paid)
 ```
 
-## Run locally
+## Features in staff mode
 
-```bash
-cd collector
-npm install
-npm run start:web    # browser preview on port 19008
-```
+- List of assigned jobs
+- Open address in **Google Maps**
+- **Call customer**
+- **Start trip** / **Mark collected**
 
-Set API URL in `collector/.env`:
+## Note
 
-```
-EXPO_PUBLIC_API_URL=https://reoil-ten.vercel.app
-```
-
-## Build APK
-
-After customer APK workflow, a collector APK can be built the same way using the `collector/` folder. Ask to enable GitHub Actions for `collector/**` when ready.
-
-## API routes
-
-| Route | Purpose |
-|-------|---------|
-| `POST /api/collector/auth/login` | Collector login |
-| `GET /api/collector/pickups` | List assigned jobs |
-| `PATCH /api/collector/pickup/[id]` | Start trip / mark collected |
-| `GET/POST /api/admin/collectors` | Admin: list / create collectors |
+The separate `collector/` folder in the repo is deprecated — everything runs inside `mobile/` now. One APK for both customers and delivery staff.

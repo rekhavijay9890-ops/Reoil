@@ -15,8 +15,8 @@ import { PrimaryButton } from "../components/PrimaryButton";
 import { useAuth } from "../context/AuthContext";
 import { colors, fonts, radius } from "../constants/theme";
 
-export default function LoginScreen() {
-  const { signIn } = useAuth();
+export default function CollectorLoginScreen() {
+  const { signInCollector } = useAuth();
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -24,8 +24,8 @@ export default function LoginScreen() {
   async function handleLogin() {
     setLoading(true);
     try {
-      await signIn(phone, password);
-      router.replace("/(tabs)/home");
+      await signInCollector(phone, password);
+      router.replace("/(collector)/jobs");
     } catch (error) {
       Alert.alert("Login failed", error instanceof Error ? error.message : "Try again.");
     } finally {
@@ -39,11 +39,9 @@ export default function LoginScreen() {
         style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <Text style={styles.logo}>
-          Re<Text style={styles.logoAccent}>oil</Text>
-        </Text>
-        <Text style={styles.title}>Welcome back</Text>
-        <Text style={styles.subtitle}>Sign in with your mobile number</Text>
+        <Text style={styles.icon}>🚚</Text>
+        <Text style={styles.title}>Delivery staff login</Text>
+        <Text style={styles.subtitle}>Sign in to see your assigned pickup jobs</Text>
 
         <Text style={styles.label}>Mobile number</Text>
         <TextInput
@@ -65,26 +63,11 @@ export default function LoginScreen() {
           placeholderTextColor={colors.muted}
         />
 
-        <PrimaryButton label="Login" onPress={handleLogin} loading={loading} />
+        <PrimaryButton label="Sign in" onPress={handleLogin} loading={loading} />
 
-        <Link href="/forgot-password" asChild>
-          <Pressable style={styles.forgot}>
-            <Text style={styles.link}>Forgot password?</Text>
-          </Pressable>
-        </Link>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>New to Reoil? </Text>
-          <Link href="/register" asChild>
-            <Pressable>
-              <Text style={styles.link}>Create account</Text>
-            </Pressable>
-          </Link>
-        </View>
-
-        <Link href="/login-collector" asChild>
-          <Pressable style={styles.staff}>
-            <Text style={styles.staffText}>🚚 Delivery staff login</Text>
+        <Link href="/login" asChild>
+          <Pressable style={styles.back}>
+            <Text style={styles.link}>← Customer login</Text>
           </Pressable>
         </Link>
       </KeyboardAvoidingView>
@@ -95,21 +78,15 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.cream },
   container: { flex: 1, padding: 24, justifyContent: "center" },
-  logo: { fontSize: 36, fontFamily: fonts.heading, color: colors.dark, textAlign: "center" },
-  logoAccent: { color: colors.light },
-  title: {
-    marginTop: 24,
-    fontSize: 28,
-    fontFamily: fonts.heading,
-    color: colors.dark,
-    textAlign: "center",
-  },
+  icon: { fontSize: 48, textAlign: "center", marginBottom: 12 },
+  title: { fontSize: 28, fontFamily: fonts.heading, color: colors.dark, textAlign: "center" },
   subtitle: {
     marginTop: 8,
     marginBottom: 28,
     fontFamily: fonts.body,
     color: colors.muted,
     textAlign: "center",
+    lineHeight: 22,
   },
   label: { fontFamily: fonts.bodySemi, color: colors.dark, marginBottom: 6 },
   input: {
@@ -124,18 +101,6 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     color: colors.text,
   },
-  forgot: { alignItems: "center", marginTop: 14 },
-  footer: { flexDirection: "row", justifyContent: "center", marginTop: 20 },
-  footerText: { fontFamily: fonts.body, color: colors.muted },
+  back: { alignItems: "center", marginTop: 20 },
   link: { fontFamily: fonts.bodySemi, color: colors.primary },
-  staff: {
-    marginTop: 24,
-    paddingVertical: 14,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.white,
-    alignItems: "center",
-  },
-  staffText: { fontFamily: fonts.bodySemi, color: colors.dark, fontSize: 15 },
 });

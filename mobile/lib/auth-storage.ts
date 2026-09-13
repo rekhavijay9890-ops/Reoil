@@ -3,13 +3,16 @@ import * as SecureStore from "expo-secure-store";
 const TOKEN_KEY = "reoil_auth_token";
 const USER_KEY = "reoil_auth_user";
 
+export type UserRole = "customer" | "collector";
+
 export type AuthUser = {
   id: string;
   phone: string;
   name: string;
-  email: string;
+  role: UserRole;
+  email?: string;
   accountType?: "home" | "business";
-  createdAt: string;
+  createdAt?: string;
 };
 
 export async function saveSession(token: string, user: AuthUser) {
@@ -22,7 +25,9 @@ export async function loadSession(): Promise<{ token: string; user: AuthUser } |
   const raw = await SecureStore.getItemAsync(USER_KEY);
   if (!token || !raw) return null;
   try {
-    return { token, user: JSON.parse(raw) as AuthUser };
+    const user = JSON.parse(raw) as AuthUser;
+    if (!user.role) user.role = "customer";
+    return { token, user };
   } catch {
     return null;
   }
