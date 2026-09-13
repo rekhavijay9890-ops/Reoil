@@ -54,6 +54,11 @@ Scan the QR code with **Expo Go** on your phone.
 
 ## Build standalone APK
 
+**On GitHub (easiest):** Actions → **Build Android APK** → **Run workflow** → download artifact.  
+See **[docs/BUILD-APK.md](docs/BUILD-APK.md)** for step-by-step screenshots-style instructions.
+
+**In Codespace or locally:**
+
 ```bash
 npm run mobile:apk
 ```
