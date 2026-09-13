@@ -68,6 +68,13 @@
       "restaurant": 15,
       "commercial": 14
     },
+    "rateRanges": {
+      "home": { "min": 10, "max": 14, "default": 12 },
+      "hotel": { "min": 12, "max": 16, "default": 14 },
+      "restaurant": { "min": 13, "max": 18, "default": 15 },
+      "commercial": { "min": 12, "max": 16, "default": 14 }
+    },
+    "negotiableEnabled": true,
     "rateUnit": "per liter",
     "methods": [
       { "label": "Cash", "value": "cash", "description": "Paid in hand when we pick up" },

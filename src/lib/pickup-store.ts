@@ -30,6 +30,9 @@ export type PickupRequest = {
   earningsInr: number;
   lat?: number;
   lng?: number;
+  proposedRatePerLitre?: number;
+  agreedRatePerLitre?: number;
+  negotiable?: boolean;
 };
 
 const DATA_FILE = path.join(process.cwd(), "data", "pickups.json");
@@ -52,6 +55,9 @@ type PickupRow = {
   earnings_inr?: number | null;
   lat?: number | null;
   lng?: number | null;
+  proposed_rate_per_litre?: number | null;
+  agreed_rate_per_litre?: number | null;
+  negotiable?: boolean | null;
 };
 
 function rowToPickup(row: PickupRow): PickupRequest {
@@ -73,6 +79,9 @@ function rowToPickup(row: PickupRow): PickupRequest {
     earningsInr: row.earnings_inr ?? 0,
     lat: row.lat ?? undefined,
     lng: row.lng ?? undefined,
+    proposedRatePerLitre: row.proposed_rate_per_litre ?? undefined,
+    agreedRatePerLitre: row.agreed_rate_per_litre ?? undefined,
+    negotiable: row.negotiable ?? undefined,
   };
 }
 
@@ -121,25 +130,32 @@ async function savePickupToSupabase(
 ): Promise<PickupRequest> {
   const supabase = getSupabase();
 
+  const insertRow: Record<string, unknown> = {
+    name: data.name,
+    email: data.email,
+    phone: data.phone,
+    address: data.address,
+    type: data.type,
+    quantity: data.quantity,
+    notes: data.notes,
+    profile_id: data.profileId ?? null,
+    status: data.status,
+    preferred_date: data.preferredDate ?? null,
+    preferred_time: data.preferredTime ?? null,
+    liters_estimated: data.litersEstimated,
+    earnings_inr: data.earningsInr,
+  };
+
+  // Only send optional columns when set — works even if phase 3/4 SQL not yet run
+  if (data.lat != null) insertRow.lat = data.lat;
+  if (data.lng != null) insertRow.lng = data.lng;
+  if (data.proposedRatePerLitre != null) insertRow.proposed_rate_per_litre = data.proposedRatePerLitre;
+  if (data.negotiable) insertRow.negotiable = true;
+  if (data.agreedRatePerLitre != null) insertRow.agreed_rate_per_litre = data.agreedRatePerLitre;
+
   const { data: row, error } = await supabase
     .from("pickups")
-    .insert({
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      address: data.address,
-      type: data.type,
-      quantity: data.quantity,
-      notes: data.notes,
-      profile_id: data.profileId ?? null,
-      status: data.status,
-      preferred_date: data.preferredDate ?? null,
-      preferred_time: data.preferredTime ?? null,
-      liters_estimated: data.litersEstimated,
-      earnings_inr: data.earningsInr,
-      lat: data.lat ?? null,
-      lng: data.lng ?? null,
-    })
+    .insert(insertRow)
     .select()
     .single();
 
@@ -230,12 +246,24 @@ export function buildPickupInput(body: Record<string, unknown>, profileId?: stri
     earningsInr,
     lat: body.lat != null ? Number(body.lat) : undefined,
     lng: body.lng != null ? Number(body.lng) : undefined,
+    proposedRatePerLitre: body.proposedRatePerLitre != null
+      ? Number(body.proposedRatePerLitre)
+      : undefined,
+    agreedRatePerLitre: body.agreedRatePerLitre != null
+      ? Number(body.agreedRatePerLitre)
+      : undefined,
+    negotiable: Boolean(body.negotiable),
   };
 }
 
 export async function updatePickup(
   id: string,
-  updates: Partial<Pick<PickupRequest, "status" | "earningsInr" | "litersEstimated">>,
+  updates: Partial<
+    Pick<
+      PickupRequest,
+      "status" | "earningsInr" | "litersEstimated" | "agreedRatePerLitre"
+    >
+  >,
 ): Promise<PickupRequest> {
   if (!isSupabaseConfigured()) {
     throw new Error("Pickup updates require Supabase");
@@ -245,6 +273,7 @@ export async function updatePickup(
   if (updates.status) payload.status = updates.status;
   if (updates.earningsInr != null) payload.earnings_inr = updates.earningsInr;
   if (updates.litersEstimated != null) payload.liters_estimated = updates.litersEstimated;
+  if (updates.agreedRatePerLitre != null) payload.agreed_rate_per_litre = updates.agreedRatePerLitre;
 
   const { data, error } = await supabase
     .from("pickups")

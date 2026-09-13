@@ -15,6 +15,8 @@ export type PickupPayload = {
   preferredTime?: string;
   lat?: number;
   lng?: number;
+  negotiable?: boolean;
+  proposedRatePerLitre?: number;
 };
 
 export type PickupSubmitResult = {
@@ -40,6 +42,9 @@ export type PickupRecord = {
   earningsInr: number;
   lat?: number;
   lng?: number;
+  proposedRatePerLitre?: number;
+  agreedRatePerLitre?: number;
+  negotiable?: boolean;
 };
 
 export type CustomerStats = {

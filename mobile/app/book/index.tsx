@@ -17,7 +17,7 @@ import { PrimaryButton } from "../../components/PrimaryButton";
 import { StepIndicator } from "../../components/StepIndicator";
 import { colors, fonts, radius, shadow } from "../../constants/theme";
 import { useAuth } from "../../context/AuthContext";
-import { mobileBooking } from "../../lib/content";
+import { mobileBooking, payout } from "../../lib/content";
 import {
   fetchAddresses,
   submitBulkPickups,
@@ -51,6 +51,19 @@ function mapQuantityForApi(value: string) {
   return match?.apiValue ?? "5-10";
 }
 
+function estimateLiters(value: string) {
+  const map: Record<string, number> = { "5": 5, "10": 10, "20": 20, "50+": 50 };
+  return map[value] ?? 10;
+}
+
+function getRateInfo(sourceType: string) {
+  const ranges = payout.rateRanges as Record<string, { min: number; max: number; default: number }>;
+  const rates = payout.rates as Record<string, number>;
+  const range = ranges[sourceType] ?? ranges.home;
+  const defaultRate = rates[sourceType] ?? rates.home;
+  return { range, defaultRate };
+}
+
 export default function BookPickupScreen() {
   const { bulk } = useLocalSearchParams<{ bulk?: string }>();
   const isBulk = bulk === "1";
@@ -72,8 +85,13 @@ export default function BookPickupScreen() {
   const [savedAddresses, setSavedAddresses] = useState<AddressRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [negotiable, setNegotiable] = useState(false);
+  const [proposedRate, setProposedRate] = useState("12");
 
   const dates = nextDates();
+  const { range, defaultRate } = getRateInfo(type);
+  const liters = estimateLiters(quantity);
+  const estimatedPayout = liters * (negotiable ? Number(proposedRate) || defaultRate : defaultRate);
 
   useEffect(() => {
     if (!token) return;
@@ -112,6 +130,13 @@ export default function BookPickupScreen() {
   }, []);
 
   function buildPayload(dateLabel: string): PickupPayload {
+    const rate = negotiable ? Number(proposedRate) : undefined;
+    if (negotiable && rate) {
+      if (rate < range.min || rate > range.max) {
+        throw new Error(`Rate must be between ₹${range.min} and ₹${range.max} per litre.`);
+      }
+    }
+
     return {
       name,
       email,
@@ -124,6 +149,8 @@ export default function BookPickupScreen() {
       notes: instructions.trim() || undefined,
       lat,
       lng,
+      negotiable,
+      proposedRatePerLitre: rate,
     };
   }
 
@@ -219,7 +246,11 @@ export default function BookPickupScreen() {
               <Pressable
                 key={item.value}
                 style={[styles.typeCard, type === item.value && styles.typeCardActive]}
-                onPress={() => setType(item.value)}
+                onPress={() => {
+                  setType(item.value);
+                  const info = getRateInfo(item.value);
+                  setProposedRate(String(info.defaultRate));
+                }}
               >
                 <Text style={styles.typeIcon}>{item.icon}</Text>
                 <View style={styles.typeText}>
@@ -265,6 +296,45 @@ export default function BookPickupScreen() {
                 </Pressable>
               ))}
             </View>
+
+            <View style={styles.priceCard}>
+              <Text style={styles.priceTitle}>Estimated payout</Text>
+              <Text style={styles.priceValue}>₹{estimatedPayout}</Text>
+              <Text style={styles.priceSub}>
+                ₹{defaultRate}/L standard · range ₹{range.min}–₹{range.max}/L
+              </Text>
+            </View>
+
+            {payout.negotiableEnabled ? (
+              <View style={styles.negotiateBlock}>
+                <Pressable
+                  style={styles.negotiateToggle}
+                  onPress={() => {
+                    setNegotiable((v) => !v);
+                    if (!negotiable) setProposedRate(String(defaultRate));
+                  }}
+                >
+                  <Text style={styles.negotiateToggleText}>
+                    {negotiable ? "✓ " : ""}Negotiable price
+                  </Text>
+                </Pressable>
+                {negotiable ? (
+                  <>
+                    <Text style={styles.fieldLabel}>Your proposed rate (₹/litre)</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={proposedRate}
+                      onChangeText={setProposedRate}
+                      keyboardType="decimal-pad"
+                      placeholder={`${range.min} – ${range.max}`}
+                    />
+                    <Text style={styles.priceSub}>
+                      Admin will confirm the final rate before pickup.
+                    </Text>
+                  </>
+                ) : null}
+              </View>
+            ) : null}
           </>
         )}
 
@@ -552,4 +622,26 @@ const styles = StyleSheet.create({
   backWrap: { flex: 1 },
   nextWrap: { flex: 2 },
   nextFull: { flex: 1 },
+  priceCard: {
+    backgroundColor: colors.mint,
+    borderRadius: radius.lg,
+    padding: 16,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: colors.light,
+  },
+  priceTitle: { fontFamily: fonts.body, color: colors.muted, fontSize: 13 },
+  priceValue: { fontFamily: fonts.heading, fontSize: 28, color: colors.primary, marginTop: 4 },
+  priceSub: { fontFamily: fonts.body, color: colors.muted, fontSize: 12, marginTop: 4, lineHeight: 18 },
+  negotiateBlock: { marginTop: 16 },
+  negotiateToggle: {
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+    marginBottom: 8,
+  },
+  negotiateToggleText: { fontFamily: fonts.bodySemi, color: colors.dark },
 });

@@ -36,24 +36,30 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const { name, email, phone, address, type, quantity } = body;
+  try {
+    const body = await request.json();
+    const { name, email, phone, address, type, quantity } = body;
 
-  if (!name || !email || !phone || !address || !type || !quantity) {
-    return NextResponse.json(
-      { error: "Please fill in all required fields." },
-      { status: 400, headers: corsHeaders },
+    if (!name || !email || !phone || !address || !type || !quantity) {
+      return NextResponse.json(
+        { error: "Please fill in all required fields." },
+        { status: 400, headers: corsHeaders },
+      );
+    }
+
+    const token = getBearerToken(request);
+    const session = token ? verifyCustomerToken(token) : null;
+
+    const pickup = await savePickup(
+      buildPickupInput(body, session?.profileId),
     );
+
+    await notifyPickupCreated(pickup);
+
+    return NextResponse.json({ success: true, pickup }, { headers: corsHeaders });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to submit pickup request";
+    console.error("[Reoil] POST /api/pickup failed:", message);
+    return NextResponse.json({ error: message }, { status: 500, headers: corsHeaders });
   }
-
-  const token = getBearerToken(request);
-  const session = token ? verifyCustomerToken(token) : null;
-
-  const pickup = await savePickup(
-    buildPickupInput(body, session?.profileId),
-  );
-
-  await notifyPickupCreated(pickup);
-
-  return NextResponse.json({ success: true, pickup }, { headers: corsHeaders });
 }

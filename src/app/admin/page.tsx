@@ -33,6 +33,9 @@ type Pickup = {
   litersEstimated: number;
   earningsInr: number;
   profileId?: string;
+  proposedRatePerLitre?: number;
+  agreedRatePerLitre?: number;
+  negotiable?: boolean;
 };
 
 export default function AdminPage() {
@@ -41,6 +44,7 @@ export default function AdminPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   const loadPickups = useCallback(async () => {
     setLoading(true);
@@ -76,6 +80,7 @@ export default function AdminPage() {
           status: updates.status,
           earningsInr: updates.earningsInr,
           litersEstimated: updates.litersEstimated,
+          agreedRatePerLitre: updates.agreedRatePerLitre,
         }),
       });
       const data = await res.json();
@@ -93,6 +98,9 @@ export default function AdminPage() {
   const totalLiters = pickups
     .filter((p) => p.status === "completed")
     .reduce((s, p) => s + (p.litersEstimated || 0), 0);
+
+  const filtered =
+    statusFilter === "all" ? pickups : pickups.filter((p) => p.status === statusFilter);
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
@@ -133,8 +141,23 @@ export default function AdminPage() {
       {error && <p className="mt-4 text-sm text-destructive" role="alert">{error}</p>}
 
       {pickups.length > 0 && (
+        <div className="mt-6 flex flex-wrap gap-2">
+          {["all", ...STATUSES].map((s) => (
+            <Button
+              key={s}
+              size="sm"
+              variant={statusFilter === s ? "default" : "outline"}
+              onClick={() => setStatusFilter(s)}
+            >
+              {s === "all" ? "All" : s.replace(/_/g, " ")}
+            </Button>
+          ))}
+        </div>
+      )}
+
+      {filtered.length > 0 && (
         <div className="mt-8 space-y-4">
-          {pickups.map((pickup) => (
+          {filtered.map((pickup) => (
             <Card key={pickup.id}>
               <CardContent className="grid gap-4 pt-6 lg:grid-cols-2">
                 <div className="space-y-1 text-sm">
@@ -146,6 +169,12 @@ export default function AdminPage() {
                     <p>Preferred: {pickup.preferredDate} {pickup.preferredTime}</p>
                   )}
                   {pickup.notes && <p className="text-muted-foreground">Notes: {pickup.notes}</p>}
+                  {pickup.negotiable && (
+                    <p className="text-amber-700">
+                      Negotiable · proposed ₹{pickup.proposedRatePerLitre ?? "—"}/L
+                      {pickup.agreedRatePerLitre != null && ` · agreed ₹${pickup.agreedRatePerLitre}/L`}
+                    </p>
+                  )}
                   <p className="text-muted-foreground">
                     Submitted {new Date(pickup.receivedAt).toLocaleString()}
                   </p>
@@ -202,6 +231,25 @@ export default function AdminPage() {
                       />
                     </div>
                   </div>
+                  {pickup.negotiable && (
+                    <div className="space-y-2">
+                      <Label>Agreed rate ₹/L</Label>
+                      <Input
+                        type="number"
+                        step="0.5"
+                        value={pickup.agreedRatePerLitre ?? pickup.proposedRatePerLitre ?? ""}
+                        onChange={(e) =>
+                          setPickups((prev) =>
+                            prev.map((p) =>
+                              p.id === pickup.id
+                                ? { ...p, agreedRatePerLitre: Number(e.target.value) }
+                                : p,
+                            ),
+                          )
+                        }
+                      />
+                    </div>
+                  )}
                   <Button
                     size="sm"
                     disabled={savingId === pickup.id}
@@ -210,6 +258,7 @@ export default function AdminPage() {
                         status: pickup.status,
                         litersEstimated: pickup.litersEstimated,
                         earningsInr: pickup.earningsInr,
+                        agreedRatePerLitre: pickup.agreedRatePerLitre,
                       })
                     }
                   >

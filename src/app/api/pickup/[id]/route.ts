@@ -65,6 +65,9 @@ export async function PATCH(
       status: status as typeof existing.status | undefined,
       earningsInr: body.earningsInr != null ? Number(body.earningsInr) : undefined,
       litersEstimated: body.litersEstimated != null ? Number(body.litersEstimated) : undefined,
+      agreedRatePerLitre: body.agreedRatePerLitre != null
+        ? Number(body.agreedRatePerLitre)
+        : undefined,
     });
 
     if (status && status !== existing.status) {
