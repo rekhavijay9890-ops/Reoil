@@ -47,6 +47,7 @@ export default function RootLayout() {
           <Stack.Screen name="index" />
           <Stack.Screen name="login" />
           <Stack.Screen name="login-collector" options={{ presentation: "card" }} />
+          <Stack.Screen name="register-collector" options={{ presentation: "card" }} />
           <Stack.Screen name="register" options={{ presentation: "card" }} />
           <Stack.Screen name="(collector)" />
           <Stack.Screen

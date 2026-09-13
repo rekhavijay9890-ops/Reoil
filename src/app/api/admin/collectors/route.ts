@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAdminAuthorized } from "@/lib/auth";
-import { createCollector, listCollectors } from "@/lib/collector-store";
+import { createCollector, listCollectorsForAdmin } from "@/lib/collector-store";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,8 +17,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: corsHeaders });
   }
   try {
-    const collectors = await listCollectors();
-    return NextResponse.json({ collectors }, { headers: corsHeaders });
+    const collectors = await listCollectorsForAdmin();
+    const pending = collectors.filter((c) => c.onboardingStatus === "pending");
+    const active = collectors.filter((c) => c.onboardingStatus === "approved");
+    return NextResponse.json({ collectors: active, pending, all: collectors }, { headers: corsHeaders });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to load collectors";
     return NextResponse.json({ error: message }, { status: 500, headers: corsHeaders });

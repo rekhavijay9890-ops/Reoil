@@ -44,12 +44,17 @@ type Collector = {
   id: string;
   name: string;
   phone: string;
+  city?: string;
+  vehicleType?: string;
+  onboardingStatus?: string;
+  createdAt?: string;
 };
 
 export default function AdminPage() {
   const [adminKey, setAdminKey] = useState("");
   const [pickups, setPickups] = useState<Pickup[]>([]);
   const [collectors, setCollectors] = useState<Collector[]>([]);
+  const [pendingCollectors, setPendingCollectors] = useState<Collector[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -74,7 +79,10 @@ export default function AdminPage() {
         headers: { Authorization: `Bearer ${adminKey}` },
       });
       const colData = await colRes.json();
-      if (colRes.ok) setCollectors(colData.collectors ?? []);
+      if (colRes.ok) {
+        setCollectors(colData.collectors ?? []);
+        setPendingCollectors(colData.pending ?? []);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load pickups");
       setPickups([]);
@@ -130,6 +138,28 @@ export default function AdminPage() {
   const filtered =
     statusFilter === "all" ? pickups : pickups.filter((p) => p.status === statusFilter);
 
+  async function reviewCollector(id: string, action: "approve" | "reject") {
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/collectors/${id}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${adminKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to update");
+      setPendingCollectors((prev) => prev.filter((c) => c.id !== id));
+      if (action === "approve") {
+        setCollectors((prev) => [...prev, data.collector]);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to review application");
+    }
+  }
+
   async function createCollectorAccount() {
     setError("");
     try {
@@ -148,6 +178,7 @@ export default function AdminPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to create collector");
       setCollectors((prev) => [...prev, data.collector]);
+      setPendingCollectors((prev) => prev.filter((c) => c.id !== data.collector.id));
       setNewCollectorName("");
       setNewCollectorPhone("");
       setNewCollectorPassword("");
@@ -210,6 +241,32 @@ export default function AdminPage() {
               Active: {collectors.map((c) => `${c.name} (${c.phone})`).join(", ")}
             </CardContent>
           )}
+        </Card>
+      )}
+
+      {pendingCollectors.length > 0 && (
+        <Card className="mt-6 border-amber-200">
+          <CardHeader>
+            <CardTitle className="font-heading text-lg text-amber-800">
+              Pending onboarding ({pendingCollectors.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {pendingCollectors.map((c) => (
+              <div key={c.id} className="flex flex-col gap-2 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-sm">
+                  <p className="font-semibold">{c.name} · {c.phone}</p>
+                  <p className="text-muted-foreground">
+                    {c.city ?? "—"} · {c.vehicleType ?? "—"} · Applied {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ""}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => reviewCollector(c.id, "approve")}>Approve</Button>
+                  <Button size="sm" variant="outline" onClick={() => reviewCollector(c.id, "reject")}>Reject</Button>
+                </div>
+              </div>
+            ))}
+          </CardContent>
         </Card>
       )}
 

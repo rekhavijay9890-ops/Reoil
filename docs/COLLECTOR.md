@@ -2,11 +2,27 @@
 
 Delivery boys use the **same Reoil APK** as customers. They sign in via a separate staff login.
 
-## How to sign in
+## How delivery boys join (onboarding)
 
-1. Open the **Reoil** app
-2. On the login screen, tap **🚚 Delivery staff login**
-3. Enter phone + password (created by admin)
+### Self-registration (recommended)
+
+1. Open **Reoil** app → **🚚 Delivery staff login**
+2. Tap **New delivery partner? Apply here**
+3. Complete 3-step onboarding:
+   - Name, phone, city
+   - Vehicle type (bike, scooter, van, car)
+   - Password
+4. Wait for **admin approval** (status: pending)
+5. After approval, sign in and see assigned jobs
+
+### Admin-created account
+
+Admin can still add delivery staff manually in **Admin dashboard** → **Delivery staff** (instantly approved).
+
+## How to sign in (after approval)
+
+1. **Reoil** app → **Delivery staff login**
+2. Enter phone + password
 
 Staff see **Jobs** and **Profile** tabs — not the customer home/bookings screens.
 
@@ -15,10 +31,14 @@ Staff see **Jobs** and **Profile** tabs — not the customer home/bookings scree
 ### 1. Run SQL (if not done)
 ```
 supabase/schema-phase5.sql
+supabase/schema-phase7.sql
 ```
 
-### 2. Create collector account
-**Admin dashboard** → **Delivery staff** → add name, phone, password
+### 2. Approve applications
+**Admin dashboard** → **Pending onboarding** → Approve or Reject
+
+### 3. Or create account manually
+**Delivery staff** section → add name, phone, password
 
 ### 3. Assign pickup
 Pick a collector → set status **assigned** → Save

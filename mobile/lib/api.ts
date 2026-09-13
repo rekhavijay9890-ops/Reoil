@@ -243,6 +243,23 @@ export type CollectorJob = {
   lng?: number;
 };
 
+export async function registerCollector(input: {
+  name: string;
+  phone: string;
+  password: string;
+  city: string;
+  vehicleType: string;
+}) {
+  const response = await fetch(`${API_URL}/api/collector/auth/register`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(input),
+  });
+  const body = await parseJson(response);
+  if (!response.ok) throw new Error(body.error ?? "Registration failed");
+  return body as { success: boolean; message: string };
+}
+
 export async function loginCollector(phone: string, password: string) {
   const response = await fetch(`${API_URL}/api/collector/auth/login`, {
     method: "POST",

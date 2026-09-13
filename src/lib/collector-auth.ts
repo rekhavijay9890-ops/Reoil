@@ -8,19 +8,36 @@ function authSecret() {
 
 export async function loginCollector(phone: string, password: string): Promise<Collector> {
   const row = await getCollectorByPhone(phone);
-  if (!row || !row.active) {
+  if (!row) {
     throw new Error("Invalid phone or password.");
   }
+
   const valid = await verifyPassword(password, row.password_hash);
   if (!valid) {
     throw new Error("Invalid phone or password.");
   }
+
+  const status = row.onboarding_status ?? "approved";
+  if (status === "pending") {
+    throw new Error("Your application is pending approval. We will notify you once approved.");
+  }
+  if (status === "rejected") {
+    throw new Error("Your application was not approved. Contact Reoil support.");
+  }
+  if (!row.active) {
+    throw new Error("Your account is disabled. Contact Reoil support.");
+  }
+
   return {
     id: row.id,
     phone: row.phone,
     name: row.name,
     active: row.active,
+    onboardingStatus: status as Collector["onboardingStatus"],
+    city: row.city ?? undefined,
+    vehicleType: row.vehicle_type ?? undefined,
     createdAt: row.created_at,
+    approvedAt: row.approved_at ?? undefined,
   };
 }
 

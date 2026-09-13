@@ -65,6 +65,12 @@ export default function CollectorLoginScreen() {
 
         <PrimaryButton label="Sign in" onPress={handleLogin} loading={loading} />
 
+        <Link href="/register-collector" asChild>
+          <Pressable style={styles.apply}>
+            <Text style={styles.applyText}>New delivery partner? Apply here</Text>
+          </Pressable>
+        </Link>
+
         <Link href="/login" asChild>
           <Pressable style={styles.back}>
             <Text style={styles.link}>← Customer login</Text>
@@ -101,6 +107,16 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     color: colors.text,
   },
-  back: { alignItems: "center", marginTop: 20 },
+  apply: {
+    marginTop: 16,
+    paddingVertical: 14,
+    borderRadius: radius.md,
+    backgroundColor: colors.mint,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: colors.light,
+  },
+  applyText: { fontFamily: fonts.bodySemi, color: colors.dark, fontSize: 15 },
+  back: { alignItems: "center", marginTop: 16 },
   link: { fontFamily: fonts.bodySemi, color: colors.primary },
 });
