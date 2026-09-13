@@ -76,7 +76,6 @@ export default function ScheduleScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <Text style={styles.heading}>Book your oil pickup</Text>
         <Text style={styles.subheading}>
           Free collection for homes and restaurants. We&apos;ll confirm within 24 hours.
         </Text>
@@ -196,12 +195,10 @@ const styles = StyleSheet.create({
     padding: 20,
     ...shadow.card,
   },
-  heading: { fontSize: 26, fontFamily: fonts.heading, color: colors.dark },
   subheading: {
     fontFamily: fonts.body,
     color: colors.muted,
-    marginTop: 6,
-    marginBottom: 20,
+    marginBottom: 16,
     lineHeight: 22,
   },
   field: { marginBottom: 14 },
