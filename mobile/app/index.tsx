@@ -2,6 +2,7 @@ import { Link } from "expo-router";
 import { useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Alert,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -11,8 +12,24 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, fonts, radius, shadow } from "../constants/theme";
-import { openPhoneCall, openWhatsApp } from "../lib/contact-actions";
 import { contact, payout, propertyTypes, stats, steps } from "../lib/content";
+
+async function openWhatsApp() {
+  const url = `whatsapp://send?phone=${contact.whatsapp}&text=${encodeURIComponent(contact.whatsappMessage)}`;
+  const webUrl = `https://wa.me/${contact.whatsapp}?text=${encodeURIComponent(contact.whatsappMessage)}`;
+  const canOpen = await Linking.canOpenURL(url);
+  await Linking.openURL(canOpen ? url : webUrl);
+}
+
+async function openPhoneCall() {
+  const url = `tel:${contact.phone}`;
+  const canOpen = await Linking.canOpenURL(url);
+  if (!canOpen) {
+    Alert.alert("Cannot call", `Dial ${contact.displayPhone} from your phone.`);
+    return;
+  }
+  await Linking.openURL(url);
+}
 
 function StepCard({
   number,
