@@ -1,58 +1,36 @@
 # Fix syntax errors in Codespace
 
-## Common mistakes
+## One-command fix
 
-1. **Pasting `import` into the terminal** — only paste code into `.tsx` files
-2. **Missing `Alert` and `Linking`** in the react-native import
-3. **Broken `shared/content.json`** — missing comma after `quantities]`
+From the repo root in Codespace:
 
-## Quick fix
-
-### 1. Check JSON is valid
-
-Open `shared/content.json`. After the `quantities` array you MUST have a comma:
-
-```json
-  ],
-  "contact": {
+```bash
+git pull origin main
+bash mobile/scripts/fix-codespace.sh
 ```
 
-Validate in terminal:
+This repairs `shared/content.json` and `mobile/lib/content.ts`, then runs a TypeScript check.
+
+## What went wrong
+
+GitHub `main` has three problems that cause red squiggles:
+
+1. **`shared/content.json` is truncated** — it starts with `"contact":` instead of `{ "stats": [...]`. That is invalid JSON.
+2. **`mobile/lib/content.ts` is missing** on GitHub.
+3. **`mobile/app/index.tsx` imports `../lib/contact-actions`** but that file does not exist on GitHub.
+
+Also: **never paste `import ...` lines into the terminal** — that is bash, not TypeScript.
+
+## After the fix
+
+```bash
+cd mobile
+npx expo start --port 8081 --clear
+```
+
+## Manual check (optional)
+
 ```bash
 python3 -c "import json; json.load(open('shared/content.json')); print('JSON OK')"
-```
-
-### 2. Replace entire `mobile/app/index.tsx`
-
-Select ALL (Ctrl+A) → Delete → Paste the file from the agent's last message → Save (Ctrl+S)
-
-First lines MUST be exactly:
-
-```tsx
-import { Link } from "expo-router";
-import { useMemo, useRef, useState, type ReactNode } from "react";
-import {
-  Alert,
-  Linking,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
-```
-
-### 3. `mobile/lib/content.ts`
-
-```typescript
-import content from "../../shared/content.json";
-
-export const { stats, steps, propertyTypes, quantities, contact, payout } = content;
-```
-
-### 4. Reload
-
-```bash
-cd mobile && npx expo start --port 8081 --clear
+cd mobile && npx tsc --noEmit
 ```

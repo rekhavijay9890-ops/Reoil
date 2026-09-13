@@ -255,17 +255,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 24,
   },
-  successIcon: {
+  successCircle: {
     width: 56,
     height: 56,
-    lineHeight: 56,
-    textAlign: "center",
+    borderRadius: 28,
+    backgroundColor: colors.light,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  successIcon: {
     fontSize: 28,
     color: colors.white,
-    backgroundColor: colors.light,
-    borderRadius: 28,
-    marginBottom: 16,
-    overflow: "hidden",
+    fontFamily: fonts.heading,
   },
   successTitle: { fontSize: 24, fontFamily: fonts.heading, color: colors.dark },
   successText: {
