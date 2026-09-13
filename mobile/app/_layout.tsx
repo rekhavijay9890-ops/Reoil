@@ -8,10 +8,10 @@ import {
   PlusJakartaSans_700Bold,
 } from "@expo-google-fonts/plus-jakarta-sans";
 import { useFonts } from "expo-font";
-import { Tabs } from "expo-router";
+import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { ActivityIndicator, Text, View } from "react-native";
-import { colors, fonts } from "../constants/theme";
+import { ActivityIndicator, View } from "react-native";
+import { colors } from "../constants/theme";
 
 export default function RootLayout() {
   const [loaded] = useFonts({
@@ -24,8 +24,15 @@ export default function RootLayout() {
 
   if (!loaded) {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.cream }}>
-        <ActivityIndicator color={colors.primary} />
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: colors.dark,
+        }}
+      >
+        <ActivityIndicator color={colors.white} />
       </View>
     );
   }
@@ -33,66 +40,11 @@ export default function RootLayout() {
   return (
     <>
       <StatusBar style="dark" />
-      <Tabs
-        screenOptions={{
-          headerStyle: { backgroundColor: colors.white },
-          headerTintColor: colors.dark,
-          headerTitleStyle: {
-            fontFamily: fonts.headingSemi,
-            fontWeight: "600",
-          },
-          tabBarActiveTintColor: colors.primary,
-          tabBarInactiveTintColor: colors.muted,
-          tabBarStyle: {
-            backgroundColor: colors.white,
-            borderTopColor: colors.border,
-          },
-          tabBarLabelStyle: {
-            fontFamily: fonts.bodySemi,
-            fontSize: 11,
-          },
-          sceneStyle: { backgroundColor: colors.cream },
-        }}
-      >
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: "Home",
-            headerShown: false,
-            tabBarIcon: ({ color }) => (
-              <Text style={{ fontSize: 20, color }}>⌂</Text>
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="schedule"
-          options={{
-            title: "Book",
-            tabBarIcon: ({ color }) => (
-              <Text style={{ fontSize: 20, color }}>📅</Text>
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="payout"
-          options={{
-            title: "Rates",
-            headerTitle: "Payout rates",
-            tabBarIcon: ({ color }) => (
-              <Text style={{ fontSize: 20, color }}>₹</Text>
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="help"
-          options={{
-            title: "Help",
-            tabBarIcon: ({ color }) => (
-              <Text style={{ fontSize: 20, color }}>💬</Text>
-            ),
-          }}
-        />
-      </Tabs>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="book" options={{ presentation: "card" }} />
+      </Stack>
     </>
   );
 }
