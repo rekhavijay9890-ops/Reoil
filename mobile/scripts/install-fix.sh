@@ -6,8 +6,9 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 
 echo "==> Writing mobile/lib/content.ts"
+cp shared/content.json mobile/content.json
 cat > mobile/lib/content.ts << 'EOF'
-import content from "../../shared/content.json";
+import content from "../content.json";
 
 export const { stats, steps, propertyTypes, quantities, contact, payout } = content;
 EOF

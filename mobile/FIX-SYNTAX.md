@@ -23,9 +23,17 @@ Also: **never paste `import ...` lines into the terminal** — that is bash, not
 
 ## After the fix
 
+From the **mobile** folder (where you already are in Codespace):
+
 ```bash
-cd mobile
-npx expo start --port 8081 --clear
+npm install
+npm run start:codespace
+```
+
+Or from repo root:
+
+```bash
+cd mobile && npm run start:codespace
 ```
 
 ## Manual check (optional)

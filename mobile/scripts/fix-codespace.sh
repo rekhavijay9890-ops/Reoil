@@ -10,9 +10,12 @@ TEMPLATES="$(cd "$(dirname "$0")/templates" && pwd)"
 echo "==> Fixing shared/content.json"
 cp "$TEMPLATES/content.json" shared/content.json
 
+echo "==> Fixing mobile/content.json"
+cp "$TEMPLATES/content.json" mobile/content.json
+
 echo "==> Fixing mobile/lib/content.ts"
 cat > mobile/lib/content.ts << 'CONTENT_TS_EOF'
-import content from "../../shared/content.json";
+import content from "../content.json";
 
 export const { stats, steps, propertyTypes, quantities, contact, payout } = content;
 CONTENT_TS_EOF

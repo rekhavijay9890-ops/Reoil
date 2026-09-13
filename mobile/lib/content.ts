@@ -1,3 +1,3 @@
-import content from "../../shared/content.json";
+import content from "../content.json";
 
 export const { stats, steps, propertyTypes, quantities, contact, payout } = content;
