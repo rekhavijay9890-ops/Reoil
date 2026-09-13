@@ -26,17 +26,36 @@ Pick a collector → set status **assigned** → Save
 ## Collector workflow
 
 ```
-assigned → Start trip → on_the_way
-on_the_way → Enter liters → collected
+assigned → Verify GPS nearby → Start trip → on_the_way
+on_the_way → Verify GPS nearby → Enter liters → collected
 Admin → completed (customer paid)
 ```
+
+## Location verification (how delivery boy is verified)
+
+The delivery boy must be **within 300 m** of the customer's pinned GPS location to:
+
+- **Start trip** (when status is assigned)
+- **Mark collected** (when status is on_the_way)
+
+The app shows live distance: *"You are 150 m from pickup"* / *"✓ At pickup location"*
+
+**Requirements:**
+- Customer must book with **GPS pinned** (Use current location in book flow)
+- Collector must allow **location permission** on their phone
+- Server validates GPS on every action (cannot be faked from app alone)
+
+Run `supabase/schema-phase6.sql` to store verification audit (optional).
+
+Change radius on Vercel: `COLLECTOR_PROXIMITY_METERS=300` (default 300 m)
 
 ## Features in staff mode
 
 - List of assigned jobs
+- Live distance to customer
 - Open address in **Google Maps**
 - **Call customer**
-- **Start trip** / **Mark collected**
+- **Verify & start trip** / **Verify & mark collected** (only when nearby)
 
 ## Note
 

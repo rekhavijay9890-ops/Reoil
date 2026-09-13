@@ -1,9 +1,10 @@
 import { useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Linking,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,37 +14,94 @@ import {
 import { PrimaryButton } from "../../components/PrimaryButton";
 import { useAuth } from "../../context/AuthContext";
 import {
-  fetchCollectorJobs,
+  fetchCollectorJobDetail,
   updateCollectorJob,
   type CollectorJob,
+  type CollectorProximity,
 } from "../../lib/api";
+import { requestCollectorLocation } from "../../lib/collector-location";
+import { COLLECTOR_PROXIMITY_METERS, formatDistance, isNearPickup } from "../../lib/geo";
 import { colors, fonts, radius, shadow } from "../../constants/theme";
 
 export default function CollectorJobScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { token } = useAuth();
   const [job, setJob] = useState<CollectorJob | null>(null);
+  const [proximity, setProximity] = useState<CollectorProximity | null>(null);
   const [loading, setLoading] = useState(true);
+  const [locating, setLocating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [liters, setLiters] = useState("");
+  const [myLat, setMyLat] = useState<number | null>(null);
+  const [myLng, setMyLng] = useState<number | null>(null);
+
+  const refreshLocation = useCallback(async () => {
+    if (!token || !id) return;
+    setLocating(true);
+    try {
+      const pos = await requestCollectorLocation();
+      setMyLat(pos.lat);
+      setMyLng(pos.lng);
+      const detail = await fetchCollectorJobDetail(id, token, pos.lat, pos.lng);
+      setJob(detail.pickup);
+      setProximity(detail.proximity);
+    } catch (error) {
+      if (!job) {
+        Alert.alert("Location needed", error instanceof Error ? error.message : "Enable GPS");
+      }
+    } finally {
+      setLocating(false);
+      setLoading(false);
+    }
+  }, [token, id]);
 
   useEffect(() => {
-    if (!token || !id) return;
-    fetchCollectorJobs(token)
-      .then((jobs) => setJob(jobs.find((j) => j.id === id) ?? null))
-      .catch(() => setJob(null))
-      .finally(() => setLoading(false));
-  }, [id, token]);
+    refreshLocation();
+    const interval = setInterval(refreshLocation, 15000);
+    return () => clearInterval(interval);
+  }, [refreshLocation]);
+
+  const withinRange =
+    proximity?.withinRange ??
+    (job?.lat != null && job?.lng != null && myLat != null && myLng != null
+      ? isNearPickup(myLat, myLng, job.lat, job.lng).withinRange
+      : false);
+
+  const distanceMeters =
+    proximity?.distanceMeters ??
+    (job?.lat != null && job?.lng != null && myLat != null && myLng != null
+      ? isNearPickup(myLat, myLng, job.lat, job.lng).distanceMeters
+      : null);
+
+  const hasPickupGps = job?.lat != null && job?.lng != null;
+
+  async function getVerifiedPosition() {
+    const pos = await requestCollectorLocation();
+    if (job?.lat != null && job?.lng != null) {
+      const check = isNearPickup(pos.lat, pos.lng, job.lat, job.lng);
+      if (!check.withinRange) {
+        throw new Error(
+          `You must be within ${COLLECTOR_PROXIMITY_METERS} m. You are ${formatDistance(check.distanceMeters)} away.`,
+        );
+      }
+    }
+    return pos;
+  }
 
   async function startTrip() {
     if (!token || !job) return;
     setSaving(true);
     try {
-      const updated = await updateCollectorJob(job.id, token, "start_trip");
+      const pos = await getVerifiedPosition();
+      const updated = await updateCollectorJob(job.id, token, "start_trip", {
+        collectorLat: pos.lat,
+        collectorLng: pos.lng,
+      });
       setJob(updated);
-      Alert.alert("Trip started", "Customer has been notified.");
+      Alert.alert("Verified & started", "You are at the pickup location. Customer notified.");
+      await refreshLocation();
     } catch (error) {
-      Alert.alert("Failed", error instanceof Error ? error.message : "Try again");
+      Alert.alert("Cannot start", error instanceof Error ? error.message : "Try again");
     } finally {
       setSaving(false);
     }
@@ -58,11 +116,16 @@ export default function CollectorJobScreen() {
     }
     setSaving(true);
     try {
-      const updated = await updateCollectorJob(job.id, token, "mark_collected", litersNum);
+      const pos = await getVerifiedPosition();
+      const updated = await updateCollectorJob(job.id, token, "mark_collected", {
+        litersCollected: litersNum,
+        collectorLat: pos.lat,
+        collectorLng: pos.lng,
+      });
       setJob(updated);
-      Alert.alert("Collected", "Admin will confirm payment to customer.");
+      Alert.alert("Collected", "Location verified. Admin will confirm payment.");
     } catch (error) {
-      Alert.alert("Failed", error instanceof Error ? error.message : "Try again");
+      Alert.alert("Cannot complete", error instanceof Error ? error.message : "Try again");
     } finally {
       setSaving(false);
     }
@@ -82,7 +145,7 @@ export default function CollectorJobScreen() {
     Linking.openURL(`tel:${job.phone}`);
   }
 
-  if (loading) {
+  if (loading && !job) {
     return <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />;
   }
   if (!job) {
@@ -91,6 +154,36 @@ export default function CollectorJobScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.scroll}>
+      <View style={styles.verifyCard}>
+        <Text style={styles.verifyTitle}>📍 Location verification</Text>
+        {!hasPickupGps ? (
+          <Text style={styles.verifyWarn}>
+            Customer did not pin GPS on this booking. Ask admin before collecting.
+          </Text>
+        ) : locating && myLat == null ? (
+          <ActivityIndicator color={colors.primary} />
+        ) : (
+          <>
+            <Text style={styles.verifyDistance}>
+              {distanceMeters != null
+                ? `You are ${formatDistance(distanceMeters)} from pickup`
+                : "Getting your location…"}
+            </Text>
+            <Text style={styles.verifyHint}>
+              Must be within {proximity?.radiusMeters ?? COLLECTOR_PROXIMITY_METERS} m to start or collect
+            </Text>
+            <View style={[styles.verifyBadge, withinRange ? styles.verifyOk : styles.verifyFar]}>
+              <Text style={[styles.verifyBadgeText, withinRange ? styles.verifyTextDark : styles.verifyTextLight]}>
+                {withinRange ? "✓ At pickup location" : "Move closer to customer"}
+              </Text>
+            </View>
+            <Pressable onPress={refreshLocation} style={styles.refreshBtn}>
+              <Text style={styles.refreshText}>Refresh location</Text>
+            </Pressable>
+          </>
+        )}
+      </View>
+
       <View style={styles.card}>
         <Text style={styles.label}>Customer</Text>
         <Text style={styles.value}>{job.name}</Text>
@@ -106,12 +199,6 @@ export default function CollectorJobScreen() {
             <Text style={styles.value}>{job.notes}</Text>
           </>
         ) : null}
-        {job.preferredDate ? (
-          <>
-            <Text style={styles.label}>Preferred time</Text>
-            <Text style={styles.value}>{job.preferredDate} {job.preferredTime ?? ""}</Text>
-          </>
-        ) : null}
       </View>
 
       <PrimaryButton label="Open in Google Maps" variant="outline" onPress={openMaps} />
@@ -120,7 +207,12 @@ export default function CollectorJobScreen() {
       <View style={{ height: 20 }} />
 
       {job.status === "assigned" && (
-        <PrimaryButton label="Start trip" onPress={startTrip} loading={saving} />
+        <PrimaryButton
+          label={withinRange ? "Verify & start trip" : "Get closer to start"}
+          onPress={startTrip}
+          loading={saving}
+          disabled={!withinRange || !hasPickupGps}
+        />
       )}
 
       {job.status === "on_the_way" && (
@@ -134,13 +226,18 @@ export default function CollectorJobScreen() {
             placeholder={`Est. ${job.litersEstimated} L`}
             placeholderTextColor={colors.muted}
           />
-          <PrimaryButton label="Mark as collected" onPress={markCollected} loading={saving} />
+          <PrimaryButton
+            label={withinRange ? "Verify & mark collected" : "Get closer to collect"}
+            onPress={markCollected}
+            loading={saving}
+            disabled={!withinRange || !hasPickupGps}
+          />
         </>
       )}
 
       {job.status === "collected" && (
         <View style={styles.done}>
-          <Text style={styles.doneText}>✓ Oil collected. Waiting for admin to complete payment.</Text>
+          <Text style={styles.doneText}>✓ Oil collected & location verified.</Text>
         </View>
       )}
     </ScrollView>
@@ -150,6 +247,30 @@ export default function CollectorJobScreen() {
 const styles = StyleSheet.create({
   scroll: { padding: 20, paddingBottom: 40 },
   error: { textAlign: "center", marginTop: 40, fontFamily: fonts.body, color: colors.muted },
+  verifyCard: {
+    backgroundColor: colors.cardDark,
+    borderRadius: radius.lg,
+    padding: 18,
+    marginBottom: 16,
+  },
+  verifyTitle: { fontFamily: fonts.headingSemi, color: colors.white, fontSize: 16 },
+  verifyDistance: { fontFamily: fonts.heading, color: colors.lime, fontSize: 22, marginTop: 8 },
+  verifyHint: { fontFamily: fonts.body, color: "rgba(255,255,255,0.75)", fontSize: 13, marginTop: 4 },
+  verifyWarn: { fontFamily: fonts.body, color: "#fcd34d", marginTop: 8, lineHeight: 20 },
+  verifyBadge: {
+    marginTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: radius.md,
+    alignItems: "center",
+  },
+  verifyOk: { backgroundColor: colors.mint },
+  verifyFar: { backgroundColor: "rgba(255,255,255,0.15)" },
+  verifyBadgeText: { fontFamily: fonts.bodySemi, fontSize: 14 },
+  verifyTextDark: { color: colors.dark },
+  verifyTextLight: { color: colors.white },
+  refreshBtn: { marginTop: 10, alignItems: "center" },
+  refreshText: { fontFamily: fonts.bodySemi, color: colors.lime, fontSize: 13 },
   card: {
     backgroundColor: colors.white,
     borderRadius: radius.lg,

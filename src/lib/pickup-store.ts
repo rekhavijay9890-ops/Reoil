@@ -35,6 +35,10 @@ export type PickupRequest = {
   negotiable?: boolean;
   collectorId?: string;
   litersCollected?: number;
+  collectorVerifiedAt?: string;
+  collectorCheckLat?: number;
+  collectorCheckLng?: number;
+  proximityMeters?: number;
 };
 
 const DATA_FILE = path.join(process.cwd(), "data", "pickups.json");
@@ -62,6 +66,10 @@ type PickupRow = {
   negotiable?: boolean | null;
   collector_id?: string | null;
   liters_collected?: number | null;
+  collector_verified_at?: string | null;
+  collector_check_lat?: number | null;
+  collector_check_lng?: number | null;
+  proximity_meters?: number | null;
 };
 
 function rowToPickup(row: PickupRow): PickupRequest {
@@ -88,6 +96,10 @@ function rowToPickup(row: PickupRow): PickupRequest {
     negotiable: row.negotiable ?? undefined,
     collectorId: row.collector_id ?? undefined,
     litersCollected: row.liters_collected ?? undefined,
+    collectorVerifiedAt: row.collector_verified_at ?? undefined,
+    collectorCheckLat: row.collector_check_lat ?? undefined,
+    collectorCheckLng: row.collector_check_lng ?? undefined,
+    proximityMeters: row.proximity_meters ?? undefined,
   };
 }
 
@@ -273,6 +285,10 @@ export async function updatePickup(
       | "agreedRatePerLitre"
       | "collectorId"
       | "litersCollected"
+      | "collectorVerifiedAt"
+      | "collectorCheckLat"
+      | "collectorCheckLng"
+      | "proximityMeters"
     >
   >,
 ): Promise<PickupRequest> {
@@ -287,6 +303,10 @@ export async function updatePickup(
   if (updates.agreedRatePerLitre != null) payload.agreed_rate_per_litre = updates.agreedRatePerLitre;
   if (updates.collectorId !== undefined) payload.collector_id = updates.collectorId || null;
   if (updates.litersCollected != null) payload.liters_collected = updates.litersCollected;
+  if (updates.collectorVerifiedAt) payload.collector_verified_at = updates.collectorVerifiedAt;
+  if (updates.collectorCheckLat != null) payload.collector_check_lat = updates.collectorCheckLat;
+  if (updates.collectorCheckLng != null) payload.collector_check_lng = updates.collectorCheckLng;
+  if (updates.proximityMeters != null) payload.proximity_meters = updates.proximityMeters;
 
   const { data, error } = await supabase
     .from("pickups")

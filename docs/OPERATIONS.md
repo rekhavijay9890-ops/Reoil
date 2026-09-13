@@ -35,11 +35,11 @@ Summary cards show: total bookings, pending count, liters collected.
 
 ## Delivery collector app
 
-A separate app for field staff (`collector/` folder).
+Built into the main **Reoil** app — staff tap **Delivery staff login** on the login screen.
 
 1. Admin creates collector accounts in `/admin` → **Delivery staff**
 2. Admin assigns a collector + sets status **assigned**
-3. Collector logs in on **Reoil Collector** app
+3. Collector opens **Reoil** app → **Delivery staff login**
 4. Collector: Start trip → Mark collected (enters liters)
 5. Admin marks **completed** with final earnings
 

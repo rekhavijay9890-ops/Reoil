@@ -263,16 +263,53 @@ export async function fetchCollectorJobs(token: string) {
   return (body.pickups ?? []) as CollectorJob[];
 }
 
+export type CollectorProximity = {
+  hasPickupLocation: boolean;
+  radiusMeters: number;
+  withinRange: boolean;
+  distanceMeters: number | null;
+};
+
+export async function fetchCollectorJobDetail(
+  id: string,
+  token: string,
+  collectorLat?: number,
+  collectorLng?: number,
+) {
+  const query =
+    collectorLat != null && collectorLng != null
+      ? `?lat=${collectorLat}&lng=${collectorLng}`
+      : "";
+  const response = await fetch(`${API_URL}/api/collector/pickup/${id}${query}`, {
+    headers: authHeaders(token),
+  });
+  const body = await parseJson(response);
+  if (!response.ok) throw new Error(body.error ?? "Failed to load job");
+  return {
+    pickup: body.pickup as CollectorJob,
+    proximity: body.proximity as CollectorProximity,
+  };
+}
+
 export async function updateCollectorJob(
   id: string,
   token: string,
   action: "start_trip" | "mark_collected",
-  litersCollected?: number,
+  input: {
+    litersCollected?: number;
+    collectorLat: number;
+    collectorLng: number;
+  },
 ) {
   const response = await fetch(`${API_URL}/api/collector/pickup/${id}`, {
     method: "PATCH",
     headers: authHeaders(token),
-    body: JSON.stringify({ action, litersCollected }),
+    body: JSON.stringify({
+      action,
+      litersCollected: input.litersCollected,
+      collectorLat: input.collectorLat,
+      collectorLng: input.collectorLng,
+    }),
   });
   const body = await parseJson(response);
   if (!response.ok) throw new Error(body.error ?? "Update failed");
