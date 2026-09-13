@@ -2,13 +2,20 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import type { AuthUser } from "../lib/auth-storage";
 import { clearSession, loadSession, saveSession } from "../lib/auth-storage";
 import { login as apiLogin, register as apiRegister } from "../lib/api";
+import { setupPushNotifications } from "../lib/push";
 
 type AuthContextValue = {
   user: AuthUser | null;
   token: string | null;
   loading: boolean;
   signIn: (phone: string, password: string) => Promise<void>;
-  signUp: (input: { phone: string; name: string; email: string; password: string }) => Promise<void>;
+  signUp: (input: {
+    phone: string;
+    name: string;
+    email: string;
+    password: string;
+    accountType?: "home" | "business";
+  }) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -25,6 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (session) {
           setUser(session.user);
           setToken(session.token);
+          setupPushNotifications(session.token).catch(() => {});
         }
       })
       .finally(() => setLoading(false));
@@ -40,12 +48,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await saveSession(result.token, result.user);
         setUser(result.user);
         setToken(result.token);
+        setupPushNotifications(result.token).catch(() => {});
       },
       async signUp(input) {
         const result = await apiRegister(input);
         await saveSession(result.token, result.user);
         setUser(result.user);
         setToken(result.token);
+        setupPushNotifications(result.token).catch(() => {});
       },
       async signOut() {
         await clearSession();

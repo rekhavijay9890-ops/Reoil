@@ -28,6 +28,8 @@ export type PickupRequest = {
   preferredTime?: string;
   litersEstimated: number;
   earningsInr: number;
+  lat?: number;
+  lng?: number;
 };
 
 const DATA_FILE = path.join(process.cwd(), "data", "pickups.json");
@@ -48,6 +50,8 @@ type PickupRow = {
   preferred_time?: string | null;
   liters_estimated?: number | null;
   earnings_inr?: number | null;
+  lat?: number | null;
+  lng?: number | null;
 };
 
 function rowToPickup(row: PickupRow): PickupRequest {
@@ -67,6 +71,8 @@ function rowToPickup(row: PickupRow): PickupRequest {
     preferredTime: row.preferred_time ?? undefined,
     litersEstimated: row.liters_estimated ?? estimateLiters(row.quantity),
     earningsInr: row.earnings_inr ?? 0,
+    lat: row.lat ?? undefined,
+    lng: row.lng ?? undefined,
   };
 }
 
@@ -131,6 +137,8 @@ async function savePickupToSupabase(
       preferred_time: data.preferredTime ?? null,
       liters_estimated: data.litersEstimated,
       earnings_inr: data.earningsInr,
+      lat: data.lat ?? null,
+      lng: data.lng ?? null,
     })
     .select()
     .single();
@@ -220,7 +228,33 @@ export function buildPickupInput(body: Record<string, unknown>, profileId?: stri
     preferredTime: body.preferredTime ? String(body.preferredTime) : undefined,
     litersEstimated,
     earningsInr,
+    lat: body.lat != null ? Number(body.lat) : undefined,
+    lng: body.lng != null ? Number(body.lng) : undefined,
   };
+}
+
+export async function updatePickup(
+  id: string,
+  updates: Partial<Pick<PickupRequest, "status" | "earningsInr" | "litersEstimated">>,
+): Promise<PickupRequest> {
+  if (!isSupabaseConfigured()) {
+    throw new Error("Pickup updates require Supabase");
+  }
+  const supabase = getSupabase();
+  const payload: Record<string, unknown> = {};
+  if (updates.status) payload.status = updates.status;
+  if (updates.earningsInr != null) payload.earnings_inr = updates.earningsInr;
+  if (updates.litersEstimated != null) payload.liters_estimated = updates.litersEstimated;
+
+  const { data, error } = await supabase
+    .from("pickups")
+    .update(payload)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error || !data) throw new Error(error?.message ?? "Failed to update pickup");
+  return rowToPickup(data as PickupRow);
 }
 
 export type CustomerStats = {
@@ -239,8 +273,10 @@ export async function getCustomerStats(profileId: string): Promise<CustomerStats
 
   const monthlyMap = new Map<string, number>();
   for (const pickup of completed) {
-    const month = new Date(pickup.receivedAt).toLocaleString("en-IN", { month: "short" });
-    monthlyMap.set(month, (monthlyMap.get(month) ?? 0) + pickup.earningsInr);
+    const d = new Date(pickup.receivedAt);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const label = d.toLocaleString("en-IN", { month: "short", year: "2-digit" });
+    monthlyMap.set(label, (monthlyMap.get(label) ?? 0) + pickup.earningsInr);
   }
 
   const monthlyEarnings = Array.from(monthlyMap.entries()).map(([month, amount]) => ({
@@ -258,5 +294,47 @@ export async function getCustomerStats(profileId: string): Promise<CustomerStats
     totalEarnings,
     monthlyEarnings,
     upcoming,
+  };
+}
+
+export type MonthlyReport = {
+  month: string;
+  pickups: number;
+  liters: number;
+  earnings: number;
+  completed: number;
+};
+
+export async function getMonthlyReport(profileId: string, month?: string): Promise<MonthlyReport> {
+  const pickups = await listPickups(profileId);
+  const now = new Date();
+  const targetMonth = month ?? `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+  const inMonth = pickups.filter((p) => p.receivedAt.startsWith(targetMonth));
+  const completed = inMonth.filter((p) => p.status === "completed");
+
+  return {
+    month: targetMonth,
+    pickups: inMonth.length,
+    liters: completed.reduce((s, p) => s + p.litersEstimated, 0),
+    earnings: completed.reduce((s, p) => s + p.earningsInr, 0),
+    completed: completed.length,
+  };
+}
+
+export async function getBusinessStats(profileId: string) {
+  const pickups = await listPickups(profileId);
+  const now = new Date();
+  const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const thisMonth = pickups.filter((p) => p.receivedAt.startsWith(monthPrefix));
+  const completedMonth = thisMonth.filter((p) => p.status === "completed");
+
+  return {
+    thisMonthLiters: completedMonth.reduce((s, p) => s + p.litersEstimated, 0),
+    thisMonthPickups: thisMonth.length,
+    thisMonthEarnings: completedMonth.reduce((s, p) => s + p.earningsInr, 0),
+    totalLiters: pickups
+      .filter((p) => p.status === "completed")
+      .reduce((s, p) => s + p.litersEstimated, 0),
   };
 }

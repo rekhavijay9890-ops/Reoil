@@ -17,6 +17,7 @@ const benefits = [
 
 export default function HomeScreen() {
   const { user, token } = useAuth();
+  const isBusiness = user?.accountType === "business";
   const [stats, setStats] = useState<CustomerStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -40,9 +41,19 @@ export default function HomeScreen() {
           title={`Hello, ${user?.name?.split(" ")[0] ?? "there"}`}
           subtitle="Ready to recycle your oil?"
           onNotificationPress={() =>
-            Alert.alert("Notifications", "Push notifications coming soon.")
+            Alert.alert(
+              "Notifications",
+              "You'll receive push alerts when your pickup status changes. Make sure notifications are enabled for Reoil in your phone settings.",
+            )
           }
         />
+
+        {isBusiness ? (
+          <Pressable style={styles.businessBanner} onPress={() => router.push("/business")}>
+            <Text style={styles.businessBannerTitle}>Business dashboard →</Text>
+            <Text style={styles.businessBannerSub}>View monthly report & bulk booking</Text>
+          </Pressable>
+        ) : null}
 
         <View style={styles.heroCard}>
           <View style={styles.heroText}>
@@ -114,6 +125,16 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.cream },
   scroll: { padding: 20, paddingBottom: 40 },
+  businessBanner: {
+    backgroundColor: colors.mint,
+    borderRadius: radius.lg,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.light,
+  },
+  businessBannerTitle: { fontFamily: fonts.bodySemi, color: colors.dark, fontSize: 15 },
+  businessBannerSub: { fontFamily: fonts.body, color: colors.muted, marginTop: 4, fontSize: 13 },
   heroCard: {
     backgroundColor: colors.cardDark,
     borderRadius: radius.xl,

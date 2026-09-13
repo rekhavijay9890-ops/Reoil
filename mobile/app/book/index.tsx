@@ -1,6 +1,7 @@
-import { router } from "expo-router";
-import { useState } from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -11,31 +12,21 @@ import {
   TextInput,
   View,
 } from "react-native";
+import * as Location from "expo-location";
 import { PrimaryButton } from "../../components/PrimaryButton";
 import { StepIndicator } from "../../components/StepIndicator";
 import { colors, fonts, radius, shadow } from "../../constants/theme";
-import {
-  quantityOptions,
-  sourceTypes,
-  timeSlots,
-} from "../../lib/demo-data";
-import { submitPickup } from "../../lib/api";
 import { useAuth } from "../../context/AuthContext";
+import { mobileBooking } from "../../lib/content";
+import {
+  fetchAddresses,
+  submitBulkPickups,
+  submitPickup,
+  type AddressRecord,
+  type PickupPayload,
+} from "../../lib/api";
 
-function mapTypeForApi(type: string) {
-  if (type === "hotel") return "commercial";
-  return type;
-}
-
-function mapQuantityForApi(value: string) {
-  const map: Record<string, string> = {
-    "5": "under-5",
-    "10": "5-10",
-    "20": "10-25",
-    "50+": "25+",
-  };
-  return map[value] ?? "5-10";
-}
+const { sourceTypes, quantityOptions, timeSlots } = mobileBooking;
 
 function nextDates(count = 7) {
   const dates: { label: string; value: string }[] = [];
@@ -44,15 +35,27 @@ function nextDates(count = 7) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
     dates.push({
-      label: d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" }),
+      label: d.toLocaleDateString("en-IN", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+      }),
       value: d.toISOString().slice(0, 10),
     });
   }
   return dates;
 }
 
+function mapQuantityForApi(value: string) {
+  const match = quantityOptions.find((q) => q.value === value);
+  return match?.apiValue ?? "5-10";
+}
+
 export default function BookPickupScreen() {
+  const { bulk } = useLocalSearchParams<{ bulk?: string }>();
+  const isBulk = bulk === "1";
   const { user, token } = useAuth();
+
   const [step, setStep] = useState(1);
   const [type, setType] = useState("home");
   const [quantity, setQuantity] = useState("10");
@@ -63,9 +66,66 @@ export default function BookPickupScreen() {
   const [email, setEmail] = useState(user?.email ?? "");
   const [date, setDate] = useState("");
   const [timeSlot, setTimeSlot] = useState("");
+  const [lat, setLat] = useState<number | undefined>();
+  const [lng, setLng] = useState<number | undefined>();
+  const [bulkCount, setBulkCount] = useState("3");
+  const [savedAddresses, setSavedAddresses] = useState<AddressRecord[]>([]);
   const [loading, setLoading] = useState(false);
+  const [locating, setLocating] = useState(false);
 
   const dates = nextDates();
+
+  useEffect(() => {
+    if (!token) return;
+    fetchAddresses(token)
+      .then((list) => {
+        setSavedAddresses(list);
+        const home = list.find((a) => a.label.toLowerCase() === "home") ?? list[0];
+        if (home && !address) {
+          setAddress(home.address);
+          setLat(home.lat);
+          setLng(home.lng);
+        }
+      })
+      .catch(() => {});
+  }, [token, address]);
+
+  const useGps = useCallback(async () => {
+    setLocating(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission needed", "Allow location to pin your pickup spot.");
+        return;
+      }
+      const pos = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      setLat(pos.coords.latitude);
+      setLng(pos.coords.longitude);
+      Alert.alert("Location pinned", "GPS coordinates saved for this pickup.");
+    } catch {
+      Alert.alert("Location error", "Could not get GPS. Enter address manually.");
+    } finally {
+      setLocating(false);
+    }
+  }, []);
+
+  function buildPayload(dateLabel: string): PickupPayload {
+    return {
+      name,
+      email,
+      phone,
+      address,
+      type,
+      quantity: mapQuantityForApi(quantity),
+      preferredDate: dateLabel,
+      preferredTime: timeSlot,
+      notes: instructions.trim() || undefined,
+      lat,
+      lng,
+    };
+  }
 
   async function handleConfirm() {
     if (!address || !name || !phone || !email || !date || !timeSlot) {
@@ -73,27 +133,38 @@ export default function BookPickupScreen() {
       return;
     }
 
+    if (isBulk && !token) {
+      Alert.alert("Login required", "Sign in to use bulk booking.");
+      return;
+    }
+
     setLoading(true);
     try {
       const dateLabel = dates.find((d) => d.value === date)?.label ?? date;
-      const result = await submitPickup(
-        {
-          name,
-          email,
-          phone,
-          address,
-          type: mapTypeForApi(type),
-          quantity: mapQuantityForApi(quantity),
-          preferredDate: dateLabel,
-          preferredTime: timeSlot,
-          notes: instructions.trim(),
-        },
-        token ?? undefined,
-      );
-
       const typeLabel = sourceTypes.find((s) => s.value === type)?.label ?? type;
       const qtyLabel = quantityOptions.find((q) => q.value === quantity)?.label ?? quantity;
+      const payload = buildPayload(dateLabel);
 
+      if (isBulk && token) {
+        const count = Math.min(10, Math.max(1, parseInt(bulkCount, 10) || 1));
+        const pickups = Array.from({ length: count }, () => payload);
+        const result = await submitBulkPickups(pickups, token);
+        router.replace({
+          pathname: "/book/success",
+          params: {
+            bulk: "1",
+            count: String(result.pickups?.length ?? count),
+            type: typeLabel,
+            quantity: qtyLabel,
+            address,
+            date: dateLabel,
+            time: timeSlot,
+          },
+        });
+        return;
+      }
+
+      const result = await submitPickup(payload, token ?? undefined);
       router.replace({
         pathname: "/book/success",
         params: {
@@ -136,6 +207,9 @@ export default function BookPickupScreen() {
     >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <StepIndicator step={step} />
+        {isBulk ? (
+          <Text style={styles.bulkBanner}>Bulk mode — schedule multiple pickups at once</Text>
+        ) : null}
 
         {step === 1 && (
           <>
@@ -154,6 +228,17 @@ export default function BookPickupScreen() {
                 </View>
               </Pressable>
             ))}
+            {isBulk ? (
+              <View style={styles.field}>
+                <Text style={styles.fieldLabel}>Number of pickups (1–10)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={bulkCount}
+                  onChangeText={setBulkCount}
+                  keyboardType="number-pad"
+                />
+              </View>
+            ) : null}
           </>
         )}
 
@@ -187,10 +272,53 @@ export default function BookPickupScreen() {
           <>
             <Text style={styles.title}>Pickup location</Text>
             <Text style={styles.subtitle}>Where should we collect the oil?</Text>
+
+            {savedAddresses.length > 0 ? (
+              <View style={styles.savedBlock}>
+                <Text style={styles.fieldLabel}>Saved addresses</Text>
+                {savedAddresses.map((item) => (
+                  <Pressable
+                    key={item.id}
+                    style={styles.savedChip}
+                    onPress={() => {
+                      setAddress(item.address);
+                      setLat(item.lat);
+                      setLng(item.lng);
+                    }}
+                  >
+                    <Text style={styles.savedChipText}>
+                      {item.label}: {item.address.slice(0, 48)}
+                      {item.address.length > 48 ? "…" : ""}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
+
             <View style={styles.mapPlaceholder}>
-              <Text style={styles.mapEmoji}>🗺️</Text>
-              <Text style={styles.mapText}>Map preview (Phase 2)</Text>
+              {lat != null && lng != null ? (
+                <>
+                  <Text style={styles.mapEmoji}>📍</Text>
+                  <Text style={styles.mapText}>
+                    GPS pinned: {lat.toFixed(5)}, {lng.toFixed(5)}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.mapEmoji}>🗺️</Text>
+                  <Text style={styles.mapText}>Tap below to pin your location</Text>
+                </>
+              )}
             </View>
+
+            <Pressable style={styles.gpsBtn} onPress={useGps} disabled={locating}>
+              {locating ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : (
+                <Text style={styles.gpsBtnText}>Use current location (GPS)</Text>
+              )}
+            </Pressable>
+
             <Field label="Full name" value={name} onChangeText={setName} />
             <Field label="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
             <Field label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" />
@@ -251,7 +379,7 @@ export default function BookPickupScreen() {
           ) : null}
           <View style={step > 1 ? styles.nextWrap : styles.nextFull}>
             <PrimaryButton
-              label={step === 4 ? "Confirm pickup" : "Continue"}
+              label={step === 4 ? (isBulk ? "Schedule all" : "Confirm pickup") : "Continue"}
               onPress={handleNext}
               loading={loading}
             />
@@ -294,6 +422,12 @@ function Field({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.cream },
   scroll: { padding: 20, paddingBottom: 40 },
+  bulkBanner: {
+    fontFamily: fonts.bodySemi,
+    color: colors.primary,
+    marginBottom: 12,
+    fontSize: 13,
+  },
   title: { fontSize: 22, fontFamily: fonts.heading, color: colors.dark },
   subtitle: {
     fontFamily: fonts.body,
@@ -354,18 +488,37 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  savedBlock: { marginBottom: 8 },
+  savedChip: {
+    backgroundColor: colors.mint,
+    padding: 10,
+    borderRadius: radius.md,
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: colors.light,
+  },
+  savedChipText: { fontFamily: fonts.body, color: colors.dark, fontSize: 13 },
   mapPlaceholder: {
     height: 120,
     backgroundColor: colors.mint,
     borderRadius: radius.lg,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: colors.border,
   },
   mapEmoji: { fontSize: 36 },
-  mapText: { fontFamily: fonts.body, color: colors.muted, marginTop: 6 },
+  mapText: { fontFamily: fonts.body, color: colors.muted, marginTop: 6, textAlign: "center", paddingHorizontal: 12 },
+  gpsBtn: {
+    marginBottom: 16,
+    padding: 14,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    alignItems: "center",
+  },
+  gpsBtnText: { fontFamily: fonts.bodySemi, color: colors.primary },
   field: { marginBottom: 14 },
   fieldLabel: {
     fontFamily: fonts.bodySemi,

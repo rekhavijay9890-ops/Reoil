@@ -1,6 +1,7 @@
 import type { AuthUser } from "./auth-storage";
 
-export const API_URL = "https://reoil-ten.vercel.app";
+export const API_URL =
+  process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "") ?? "https://reoil-ten.vercel.app";
 
 export type PickupPayload = {
   name: string;
@@ -12,6 +13,14 @@ export type PickupPayload = {
   notes?: string;
   preferredDate?: string;
   preferredTime?: string;
+  lat?: number;
+  lng?: number;
+};
+
+export type PickupSubmitResult = {
+  success: boolean;
+  pickup?: PickupRecord;
+  pickups?: PickupRecord[];
 };
 
 export type PickupRecord = {
@@ -29,6 +38,8 @@ export type PickupRecord = {
   preferredTime?: string;
   litersEstimated: number;
   earningsInr: number;
+  lat?: number;
+  lng?: number;
 };
 
 export type CustomerStats = {
@@ -37,6 +48,31 @@ export type CustomerStats = {
   totalEarnings: number;
   monthlyEarnings: { month: string; amount: number }[];
   upcoming: PickupRecord | null;
+};
+
+export type AddressRecord = {
+  id: string;
+  profileId: string;
+  label: string;
+  address: string;
+  lat?: number;
+  lng?: number;
+  createdAt: string;
+};
+
+export type MonthlyReport = {
+  month: string;
+  pickups: number;
+  liters: number;
+  earnings: number;
+  completed: number;
+};
+
+export type BusinessStats = {
+  thisMonthLiters: number;
+  thisMonthPickups: number;
+  thisMonthEarnings: number;
+  totalLiters: number;
 };
 
 async function parseJson(response: Response) {
@@ -65,6 +101,7 @@ export async function register(input: {
   name: string;
   email: string;
   password: string;
+  accountType?: "home" | "business";
 }) {
   const response = await fetch(`${API_URL}/api/auth/register`, {
     method: "POST",
@@ -76,6 +113,20 @@ export async function register(input: {
   return body as { token: string; user: AuthUser };
 }
 
+export async function resetPassword(input: {
+  phone: string;
+  email: string;
+  newPassword: string;
+}) {
+  const response = await fetch(`${API_URL}/api/auth/reset-password`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(input),
+  });
+  const body = await parseJson(response);
+  if (!response.ok) throw new Error(body.error ?? "Reset failed");
+}
+
 export async function submitPickup(payload: PickupPayload, token?: string) {
   const response = await fetch(`${API_URL}/api/pickup`, {
     method: "POST",
@@ -84,32 +135,87 @@ export async function submitPickup(payload: PickupPayload, token?: string) {
   });
   const body = await parseJson(response);
   if (!response.ok) throw new Error(body.error ?? "Failed to submit pickup request");
-  return body;
+  return body as PickupSubmitResult;
+}
+
+export async function submitBulkPickups(pickups: PickupPayload[], token: string) {
+  const response = await fetch(`${API_URL}/api/pickup/bulk`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify({ pickups }),
+  });
+  const body = await parseJson(response);
+  if (!response.ok) throw new Error(body.error ?? "Bulk booking failed");
+  return body as PickupSubmitResult;
+}
+
+export async function registerPushToken(authToken: string, pushToken: string) {
+  const response = await fetch(`${API_URL}/api/me/push-token`, {
+    method: "POST",
+    headers: authHeaders(authToken),
+    body: JSON.stringify({ token: pushToken, platform: "android" }),
+  });
+  const body = await parseJson(response);
+  if (!response.ok) throw new Error(body.error ?? "Failed to register push token");
 }
 
 export async function fetchMyPickups(token: string) {
-  const response = await fetch(`${API_URL}/api/me/pickups`, {
-    headers: authHeaders(token),
-  });
+  const response = await fetch(`${API_URL}/api/me/pickups`, { headers: authHeaders(token) });
   const body = await parseJson(response);
   if (!response.ok) throw new Error(body.error ?? "Failed to load pickups");
   return (body.pickups ?? []) as PickupRecord[];
 }
 
 export async function fetchMyStats(token: string) {
-  const response = await fetch(`${API_URL}/api/me/stats`, {
-    headers: authHeaders(token),
-  });
+  const response = await fetch(`${API_URL}/api/me/stats`, { headers: authHeaders(token) });
   const body = await parseJson(response);
   if (!response.ok) throw new Error(body.error ?? "Failed to load stats");
   return body.stats as CustomerStats;
 }
 
+export async function fetchMonthlyReport(token: string, month?: string) {
+  const url = month
+    ? `${API_URL}/api/me/report?month=${month}`
+    : `${API_URL}/api/me/report`;
+  const response = await fetch(url, { headers: authHeaders(token) });
+  const body = await parseJson(response);
+  if (!response.ok) throw new Error(body.error ?? "Failed to load report");
+  return body as { report: MonthlyReport; business: BusinessStats };
+}
+
 export async function fetchPickupById(id: string, token: string) {
-  const response = await fetch(`${API_URL}/api/pickup/${id}`, {
-    headers: authHeaders(token),
-  });
+  const response = await fetch(`${API_URL}/api/pickup/${id}`, { headers: authHeaders(token) });
   const body = await parseJson(response);
   if (!response.ok) throw new Error(body.error ?? "Failed to load pickup");
   return body.pickup as PickupRecord;
+}
+
+export async function fetchAddresses(token: string) {
+  const response = await fetch(`${API_URL}/api/me/addresses`, { headers: authHeaders(token) });
+  const body = await parseJson(response);
+  if (!response.ok) throw new Error(body.error ?? "Failed to load addresses");
+  return (body.addresses ?? []) as AddressRecord[];
+}
+
+export async function saveAddress(
+  token: string,
+  input: { label: string; address: string; lat?: number; lng?: number },
+) {
+  const response = await fetch(`${API_URL}/api/me/addresses`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify(input),
+  });
+  const body = await parseJson(response);
+  if (!response.ok) throw new Error(body.error ?? "Failed to save address");
+  return body.address as AddressRecord;
+}
+
+export async function deleteAddress(token: string, id: string) {
+  const response = await fetch(`${API_URL}/api/me/addresses?id=${id}`, {
+    method: "DELETE",
+    headers: authHeaders(token),
+  });
+  const body = await parseJson(response);
+  if (!response.ok) throw new Error(body.error ?? "Failed to delete address");
 }

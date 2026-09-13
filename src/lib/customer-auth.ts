@@ -4,11 +4,14 @@ import { getSupabase, isSupabaseConfigured } from "./supabase";
 
 const scryptAsync = promisify(scrypt);
 
+export type AccountType = "home" | "business";
+
 export type CustomerProfile = {
   id: string;
   phone: string;
   name: string;
   email: string;
+  accountType: AccountType;
   createdAt: string;
 };
 
@@ -18,6 +21,7 @@ type ProfileRow = {
   name: string;
   email: string;
   password_hash: string;
+  account_type?: string | null;
   created_at: string;
 };
 
@@ -53,8 +57,17 @@ function rowToProfile(row: ProfileRow): CustomerProfile {
     phone: row.phone,
     name: row.name,
     email: row.email,
+    accountType: row.account_type === "business" ? "business" : "home",
     createdAt: row.created_at,
   };
+}
+
+export async function getProfileById(profileId: string): Promise<CustomerProfile | null> {
+  if (!isSupabaseConfigured()) return null;
+  const supabase = getSupabase();
+  const { data, error } = await supabase.from("profiles").select("*").eq("id", profileId).maybeSingle();
+  if (error || !data) return null;
+  return rowToProfile(data as ProfileRow);
 }
 
 export async function registerCustomer(input: {
@@ -62,6 +75,7 @@ export async function registerCustomer(input: {
   name: string;
   email: string;
   password: string;
+  accountType?: AccountType;
 }): Promise<CustomerProfile> {
   if (!isSupabaseConfigured()) {
     throw new Error("Registration requires Supabase. See docs/SUPABASE.md");
@@ -85,6 +99,7 @@ export async function registerCustomer(input: {
       name: input.name.trim(),
       email: input.email.trim(),
       password_hash: passwordHash,
+      account_type: input.accountType ?? "home",
     })
     .select()
     .single();
@@ -154,6 +169,41 @@ export function verifyCustomerToken(token: string): { profileId: string; phone: 
   } catch {
     return null;
   }
+}
+
+export async function resetPassword(input: {
+  phone: string;
+  email: string;
+  newPassword: string;
+}) {
+  if (!isSupabaseConfigured()) {
+    throw new Error("Password reset requires Supabase.");
+  }
+  const phone = normalizePhone(input.phone);
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("phone", phone)
+    .maybeSingle();
+
+  if (error || !data) {
+    throw new Error("No account found with this phone and email.");
+  }
+  if ((data as ProfileRow).email.toLowerCase() !== input.email.trim().toLowerCase()) {
+    throw new Error("No account found with this phone and email.");
+  }
+  if (input.newPassword.length < 6) {
+    throw new Error("Password must be at least 6 characters.");
+  }
+
+  const passwordHash = await hashPassword(input.newPassword);
+  const { error: updateError } = await supabase
+    .from("profiles")
+    .update({ password_hash: passwordHash })
+    .eq("id", (data as ProfileRow).id);
+
+  if (updateError) throw new Error(updateError.message);
 }
 
 export function getBearerToken(request: Request) {

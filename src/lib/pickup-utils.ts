@@ -16,6 +16,16 @@ const RATE_BY_TYPE: Record<string, number> = {
   commercial: 14,
 };
 
+export const PICKUP_STATUSES = [
+  "pending",
+  "confirmed",
+  "assigned",
+  "on_the_way",
+  "collected",
+  "completed",
+  "cancelled",
+] as const;
+
 export function estimateLiters(quantity: string) {
   return QUANTITY_LITERS[quantity] ?? 10;
 }

@@ -5,6 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const STATUSES = [
+  "pending",
+  "confirmed",
+  "assigned",
+  "on_the_way",
+  "collected",
+  "completed",
+  "cancelled",
+] as const;
 
 type Pickup = {
   id: string;
@@ -16,6 +27,12 @@ type Pickup = {
   quantity: string;
   notes: string;
   receivedAt: string;
+  status: string;
+  preferredDate?: string;
+  preferredTime?: string;
+  litersEstimated: number;
+  earningsInr: number;
+  profileId?: string;
 };
 
 export default function AdminPage() {
@@ -23,24 +40,18 @@ export default function AdminPage() {
   const [pickups, setPickups] = useState<Pickup[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   const loadPickups = useCallback(async () => {
     setLoading(true);
     setError("");
-
     try {
       const res = await fetch("/api/pickup", {
         headers: { Authorization: `Bearer ${adminKey}` },
       });
-
       const data = await res.json();
-
       if (!res.ok) {
-        throw new Error(
-          res.status === 401
-            ? "Invalid admin key"
-            : data.error ?? "Failed to load pickups",
-        );
+        throw new Error(res.status === 401 ? "Invalid admin key" : data.error ?? "Failed to load");
       }
       setPickups(data.pickups);
     } catch (err) {
@@ -51,11 +62,43 @@ export default function AdminPage() {
     }
   }, [adminKey]);
 
+  async function updatePickup(id: string, updates: Partial<Pickup>) {
+    setSavingId(id);
+    setError("");
+    try {
+      const res = await fetch(`/api/pickup/${id}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${adminKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: updates.status,
+          earningsInr: updates.earningsInr,
+          litersEstimated: updates.litersEstimated,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Update failed");
+      setPickups((prev) => prev.map((p) => (p.id === id ? { ...p, ...data.pickup } : p)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Update failed");
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  const pending = pickups.filter((p) => p.status === "pending").length;
+  const completed = pickups.filter((p) => p.status === "completed").length;
+  const totalLiters = pickups
+    .filter((p) => p.status === "completed")
+    .reduce((s, p) => s + (p.litersEstimated || 0), 0);
+
   return (
-    <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
-      <h1 className="font-heading text-3xl font-bold text-reoil-dark">Pickup requests</h1>
+    <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+      <h1 className="font-heading text-3xl font-bold text-reoil-dark">Admin dashboard</h1>
       <p className="mt-2 text-muted-foreground">
-        Admin dashboard — view all customer oil pickup bookings. No customer login required.
+        Manage pickup requests — update status, set earnings, track operations.
       </p>
 
       <Card className="mt-8">
@@ -79,26 +122,105 @@ export default function AdminPage() {
         </CardContent>
       </Card>
 
-      {error && (
-        <p className="mt-4 text-sm text-destructive" role="alert">{error}</p>
+      {pickups.length > 0 && (
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Total</p><p className="text-2xl font-bold">{pickups.length}</p></CardContent></Card>
+          <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Pending</p><p className="text-2xl font-bold text-amber-600">{pending}</p></CardContent></Card>
+          <Card><CardContent className="pt-6"><p className="text-sm text-muted-foreground">Liters collected</p><p className="text-2xl font-bold text-reoil">{totalLiters} L</p></CardContent></Card>
+        </div>
       )}
+
+      {error && <p className="mt-4 text-sm text-destructive" role="alert">{error}</p>}
 
       {pickups.length > 0 && (
         <div className="mt-8 space-y-4">
-          <p className="text-sm text-muted-foreground">{pickups.length} request(s)</p>
           {pickups.map((pickup) => (
             <Card key={pickup.id}>
-              <CardContent className="grid gap-2 pt-6 sm:grid-cols-2">
-                <p><strong>Name:</strong> {pickup.name}</p>
-                <p><strong>Phone:</strong> {pickup.phone}</p>
-                <p><strong>Email:</strong> {pickup.email}</p>
-                <p><strong>Type:</strong> {pickup.type}</p>
-                <p><strong>Quantity:</strong> {pickup.quantity}</p>
-                <p><strong>Submitted:</strong> {new Date(pickup.receivedAt).toLocaleString()}</p>
-                <p className="sm:col-span-2"><strong>Address:</strong> {pickup.address}</p>
-                {pickup.notes && (
-                  <p className="sm:col-span-2"><strong>Notes:</strong> {pickup.notes}</p>
-                )}
+              <CardContent className="grid gap-4 pt-6 lg:grid-cols-2">
+                <div className="space-y-1 text-sm">
+                  <p><strong>{pickup.name}</strong> · {pickup.phone}</p>
+                  <p>{pickup.email}</p>
+                  <p>{pickup.type} · {pickup.quantity}</p>
+                  <p>{pickup.address}</p>
+                  {pickup.preferredDate && (
+                    <p>Preferred: {pickup.preferredDate} {pickup.preferredTime}</p>
+                  )}
+                  {pickup.notes && <p className="text-muted-foreground">Notes: {pickup.notes}</p>}
+                  <p className="text-muted-foreground">
+                    Submitted {new Date(pickup.receivedAt).toLocaleString()}
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label>Status</Label>
+                    <Select
+                      value={pickup.status}
+                      onValueChange={(value) => {
+                        if (value) updatePickup(pickup.id, { ...pickup, status: value });
+                      }}
+                      disabled={savingId === pickup.id}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {STATUSES.map((s) => (
+                          <SelectItem key={s} value={s}>{s.replace(/_/g, " ")}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label>Liters</Label>
+                      <Input
+                        type="number"
+                        value={pickup.litersEstimated}
+                        onChange={(e) =>
+                          setPickups((prev) =>
+                            prev.map((p) =>
+                              p.id === pickup.id
+                                ? { ...p, litersEstimated: Number(e.target.value) }
+                                : p,
+                            ),
+                          )
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Earnings ₹</Label>
+                      <Input
+                        type="number"
+                        value={pickup.earningsInr}
+                        onChange={(e) =>
+                          setPickups((prev) =>
+                            prev.map((p) =>
+                              p.id === pickup.id
+                                ? { ...p, earningsInr: Number(e.target.value) }
+                                : p,
+                            ),
+                          )
+                        }
+                      />
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    disabled={savingId === pickup.id}
+                    onClick={() =>
+                      updatePickup(pickup.id, {
+                        status: pickup.status,
+                        litersEstimated: pickup.litersEstimated,
+                        earningsInr: pickup.earningsInr,
+                      })
+                    }
+                  >
+                    {savingId === pickup.id ? "Saving…" : "Save changes"}
+                  </Button>
+                  {pickup.status === "completed" && (
+                    <p className="text-xs text-muted-foreground">
+                      Completed pickups appear in customer earnings.
+                    </p>
+                  )}
+                </div>
               </CardContent>
             </Card>
           ))}

@@ -67,6 +67,12 @@ export default function LoginScreen() {
 
         <PrimaryButton label="Login" onPress={handleLogin} loading={loading} />
 
+        <Link href="/forgot-password" asChild>
+          <Pressable style={styles.forgot}>
+            <Text style={styles.link}>Forgot password?</Text>
+          </Pressable>
+        </Link>
+
         <View style={styles.footer}>
           <Text style={styles.footerText}>New to Reoil? </Text>
           <Link href="/register" asChild>
@@ -112,6 +118,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     color: colors.text,
   },
+  forgot: { alignItems: "center", marginTop: 14 },
   footer: { flexDirection: "row", justifyContent: "center", marginTop: 20 },
   footerText: { fontFamily: fonts.body, color: colors.muted },
   link: { fontFamily: fonts.bodySemi, color: colors.primary },

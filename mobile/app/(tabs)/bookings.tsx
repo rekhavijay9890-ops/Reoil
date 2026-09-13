@@ -4,7 +4,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { useAuth } from "../../context/AuthContext";
 import { colors, fonts, radius, shadow } from "../../constants/theme";
 import { fetchMyPickups, type PickupRecord } from "../../lib/api";
-import { formatPickupType, formatQuantity, formatStatus, pickupDateLabel } from "../../lib/pickup-display";
+import { formatPickupType, formatQuantity, formatStatus, matchesTypeFilter, pickupDateLabel } from "../../lib/pickup-display";
 
 const filters = ["All", "Home", "Hotel", "Restaurant", "Commercial"] as const;
 
@@ -25,10 +25,7 @@ export default function BookingsScreen() {
     }, [token]),
   );
 
-  const items = pickups.filter((item) => {
-    if (filter === "All") return true;
-    return formatPickupType(item.type) === filter;
-  });
+  const items = pickups.filter((item) => matchesTypeFilter(item.type, filter));
 
   return (
     <ScrollView contentContainerStyle={styles.scroll}>

@@ -22,12 +22,19 @@ export default function RegisterScreen() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isBusiness, setIsBusiness] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleRegister() {
     setLoading(true);
     try {
-      await signUp({ name, phone, email, password });
+      await signUp({
+        name,
+        phone,
+        email,
+        password,
+        accountType: isBusiness ? "business" : "home",
+      });
       router.replace("/(tabs)/home");
     } catch (error) {
       Alert.alert("Registration failed", error instanceof Error ? error.message : "Try again.");
@@ -50,6 +57,11 @@ export default function RegisterScreen() {
           <Field label="Mobile number" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
           <Field label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" />
           <Field label="Password" value={password} onChangeText={setPassword} secureTextEntry />
+
+          <Pressable style={styles.businessRow} onPress={() => setIsBusiness((v) => !v)}>
+            <Text style={styles.checkbox}>{isBusiness ? "☑" : "☐"}</Text>
+            <Text style={styles.businessText}>I run a restaurant or hotel (business account)</Text>
+          </Pressable>
 
           <PrimaryButton label="Create account" onPress={handleRegister} loading={loading} />
 
@@ -121,6 +133,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text,
   },
+  businessRow: { flexDirection: "row", alignItems: "center", marginBottom: 16, gap: 10 },
+  checkbox: { fontSize: 18 },
+  businessText: { flex: 1, fontFamily: fonts.body, color: colors.dark, fontSize: 14 },
   footer: { flexDirection: "row", justifyContent: "center", marginTop: 20 },
   footerText: { fontFamily: fonts.body, color: colors.muted },
   link: { fontFamily: fonts.bodySemi, color: colors.primary },

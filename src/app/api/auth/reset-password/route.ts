@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createCustomerToken, registerCustomer } from "@/lib/customer-auth";
+import { resetPassword } from "@/lib/customer-auth";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,22 +14,14 @@ export async function OPTIONS() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const profile = await registerCustomer({
+    await resetPassword({
       phone: String(body.phone ?? ""),
-      name: String(body.name ?? ""),
       email: String(body.email ?? ""),
-      password: String(body.password ?? ""),
-      accountType: body.accountType === "business" ? "business" : "home",
+      newPassword: String(body.newPassword ?? ""),
     });
-
-    const token = createCustomerToken(profile);
-
-    return NextResponse.json(
-      { token, user: profile },
-      { headers: corsHeaders },
-    );
+    return NextResponse.json({ success: true }, { headers: corsHeaders });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Registration failed";
+    const message = error instanceof Error ? error.message : "Reset failed";
     return NextResponse.json({ error: message }, { status: 400, headers: corsHeaders });
   }
 }

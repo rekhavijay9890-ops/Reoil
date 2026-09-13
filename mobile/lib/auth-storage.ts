@@ -8,6 +8,7 @@ export type AuthUser = {
   phone: string;
   name: string;
   email: string;
+  accountType?: "home" | "business";
   createdAt: string;
 };
 

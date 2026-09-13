@@ -5,9 +5,15 @@ export function formatPickupType(type: string) {
     home: "Home",
     hotel: "Hotel",
     restaurant: "Restaurant",
-    commercial: "Commercial",
+    commercial: "Commercial kitchen",
   };
   return map[type] ?? type;
+}
+
+export function matchesTypeFilter(type: string, filter: string) {
+  if (filter === "All") return true;
+  if (filter === "Commercial") return type === "commercial";
+  return formatPickupType(type) === filter;
 }
 
 export function formatStatus(status: string) {

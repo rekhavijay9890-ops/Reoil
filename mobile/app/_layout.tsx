@@ -47,6 +47,9 @@ export default function RootLayout() {
           <Stack.Screen name="index" />
           <Stack.Screen name="login" />
           <Stack.Screen name="register" options={{ presentation: "card" }} />
+          <Stack.Screen name="forgot-password" options={{ presentation: "card" }} />
+          <Stack.Screen name="addresses" options={{ presentation: "card" }} />
+          <Stack.Screen name="business" options={{ presentation: "card" }} />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="book" options={{ presentation: "card" }} />
           <Stack.Screen name="track/[id]" options={{ presentation: "card", headerShown: true, title: "Track pickup" }} />

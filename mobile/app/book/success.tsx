@@ -7,6 +7,8 @@ import { colors, fonts, radius, shadow } from "../../constants/theme";
 export default function BookingSuccessScreen() {
   const params = useLocalSearchParams<{
     id?: string;
+    bulk?: string;
+    count?: string;
     type?: string;
     quantity?: string;
     address?: string;
@@ -14,15 +16,21 @@ export default function BookingSuccessScreen() {
     time?: string;
   }>();
 
+  const isBulk = params.bulk === "1";
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.content}>
         <View style={styles.checkCircle}>
           <Text style={styles.check}>✓</Text>
         </View>
-        <Text style={styles.title}>Pickup Confirmed</Text>
+        <Text style={styles.title}>
+          {isBulk ? `${params.count ?? "Multiple"} pickups scheduled` : "Pickup Confirmed"}
+        </Text>
         <Text style={styles.subtitle}>
-          We&apos;ll contact you within 24 hours to confirm your collection time.
+          {isBulk
+            ? "All pickups are booked. We'll confirm each slot within 24 hours."
+            : "We'll contact you within 24 hours to confirm your collection time."}
         </Text>
 
         <View style={styles.summary}>
@@ -34,9 +42,9 @@ export default function BookingSuccessScreen() {
         </View>
 
         <PrimaryButton
-          label="Track pickup"
+          label={isBulk ? "View bookings" : "Track pickup"}
           onPress={() => {
-            if (params.id) {
+            if (!isBulk && params.id) {
               router.replace(`/track/${params.id}`);
             } else {
               router.replace("/(tabs)/bookings");

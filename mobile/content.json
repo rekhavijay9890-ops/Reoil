@@ -20,9 +20,29 @@
   ],
   "propertyTypes": [
     { "label": "Home", "value": "home" },
+    { "label": "Hotel", "value": "hotel" },
     { "label": "Restaurant", "value": "restaurant" },
     { "label": "Commercial kitchen", "value": "commercial" }
   ],
+  "mobileBooking": {
+    "sourceTypes": [
+      { "label": "Home", "value": "home", "icon": "🏠", "description": "Household used cooking oil" },
+      { "label": "Hotel", "value": "hotel", "icon": "🏨", "description": "Hotels & lodges" },
+      { "label": "Restaurant", "value": "restaurant", "icon": "🍽️", "description": "Restaurants & cafés" }
+    ],
+    "quantityOptions": [
+      { "label": "5 L", "value": "5", "apiValue": "under-5" },
+      { "label": "10 L", "value": "10", "apiValue": "5-10" },
+      { "label": "20 L", "value": "20", "apiValue": "10-25" },
+      { "label": "50 L+", "value": "50+", "apiValue": "25+" }
+    ],
+    "timeSlots": [
+      "9:00 AM – 11:00 AM",
+      "11:00 AM – 1:00 PM",
+      "2:00 PM – 4:00 PM",
+      "4:00 PM – 6:00 PM"
+    ]
+  },
   "quantities": [
     { "label": "Under 5 liters", "value": "under-5" },
     { "label": "5–10 liters", "value": "5-10" },
@@ -44,6 +64,7 @@
     "subtitle": "You give us used cooking oil — we pay you when we collect it.",
     "rates": {
       "home": 12,
+      "hotel": 14,
       "restaurant": 15,
       "commercial": 14
     },

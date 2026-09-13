@@ -43,10 +43,14 @@ export default function ProfileScreen() {
               onPress={() => {
                 if (item.label === "Help & support") {
                   openWhatsApp().catch(() => Alert.alert("WhatsApp", "Could not open WhatsApp."));
+                } else if (item.label === "Saved addresses") {
+                  router.push("/addresses");
                 } else if (item.label === "Pickup history") {
                   router.push("/(tabs)/bookings");
                 } else if (item.label === "Earnings & payments") {
                   router.push("/(tabs)/earnings");
+                } else if (item.label === "Personal information" && user?.accountType === "business") {
+                  router.push("/business");
                 } else {
                   Alert.alert(item.label, "More options coming soon.");
                 }
