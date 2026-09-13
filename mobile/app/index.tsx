@@ -1,6 +1,5 @@
-import { LinearGradient } from "expo-linear-gradient";
 import { Link } from "expo-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Alert,
   Pressable,
@@ -15,7 +14,32 @@ import { colors, fonts, radius, shadow } from "../constants/theme";
 import { openPhoneCall, openWhatsApp } from "../lib/contact-actions";
 import { contact, payout, propertyTypes, stats, steps } from "../lib/content";
 
+function StepCard({
+  number,
+  title,
+  description,
+  children,
+}: {
+  number: string;
+  title: string;
+  description: string;
+  children?: ReactNode;
+}) {
+  return (
+    <View style={styles.stepCard}>
+      <View style={styles.stepNumber}>
+        <Text style={styles.stepNumberText}>{number}</Text>
+      </View>
+      <Text style={styles.stepTitle}>{title}</Text>
+      <Text style={styles.stepDescription}>{description}</Text>
+      {children}
+    </View>
+  );
+}
+
 export default function HomeScreen() {
+  const scrollRef = useRef<ScrollView>(null);
+  const [supportY, setSupportY] = useState(0);
   const [type, setType] = useState("home");
   const [liters, setLiters] = useState("10");
 
@@ -39,74 +63,68 @@ export default function HomeScreen() {
     }
   }
 
+  function scrollToSupport() {
+    scrollRef.current?.scrollTo({ y: supportY - 20, animated: true });
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.scroll}>
         <View style={styles.header}>
-          <View style={styles.logoMark}>
-            <Text style={styles.logoMarkText}>💧</Text>
-          </View>
           <Text style={styles.logo}>
             Re<Text style={styles.logoAccent}>oil</Text>
           </Text>
+          <Pressable style={styles.settingsButton} onPress={scrollToSupport}>
+            <Text style={styles.settingsIcon}>⚙</Text>
+          </Pressable>
         </View>
 
-        <View style={styles.hero}>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>Eco-friendly oil recycling</Text>
-          </View>
-          <Text style={styles.title}>
-            Turn used cooking oil into a cleaner planet
-          </Text>
-          <Text style={styles.subtitle}>
-            Reoil collects used cooking oil from homes and restaurants, keeping
-            grease out of drains and turning waste into biofuel.
-          </Text>
-
-          <View style={styles.actions}>
-            <Link href="/schedule" asChild>
-              <Pressable style={styles.primaryButton}>
-                <Text style={styles.primaryButtonText}>Schedule a pickup</Text>
-              </Pressable>
-            </Link>
-          </View>
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>Eco-friendly oil recycling</Text>
         </View>
 
-        <LinearGradient
-          colors={[colors.dark, colors.primary, colors.light]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.statsCard}
-        >
+        <Text style={styles.title}>
+          Turn used cooking oil into a cleaner planet
+        </Text>
+        <Text style={styles.subtitle}>
+          Reoil collects used cooking oil from homes and restaurants, keeping
+          grease out of drains and turning waste into biofuel.
+        </Text>
+
+        <Link href="/schedule" asChild>
+          <Pressable style={styles.primaryButton}>
+            <Text style={styles.primaryButtonText}>Schedule a pickup</Text>
+          </Pressable>
+        </Link>
+
+        <View style={styles.statsCard}>
           <Text style={styles.statsTitle}>Why Reoil?</Text>
-          {stats.map((stat) => (
-            <View key={stat.label} style={styles.statRow}>
+          {stats.map((stat, index) => (
+            <View
+              key={stat.label}
+              style={[styles.statRow, index === stats.length - 1 && styles.statRowLast]}
+            >
               <Text style={styles.statLabel}>{stat.label}</Text>
               <Text style={styles.statValue}>{stat.value}</Text>
             </View>
           ))}
-        </LinearGradient>
+        </View>
 
         <Text style={styles.sectionTitle}>How it works</Text>
-        <Text style={styles.sectionSubtitle}>
-          Three simple steps from your kitchen to clean energy.
-        </Text>
         {steps.map((step, index) => (
-          <View key={step.title} style={styles.stepCard}>
-            <View style={styles.stepNumber}>
-              <Text style={styles.stepNumberText}>{index + 1}</Text>
-            </View>
-            <Text style={styles.stepLabel}>Step {index + 1}</Text>
-            <Text style={styles.stepTitle}>{step.title}</Text>
-            <Text style={styles.stepDescription}>{step.description}</Text>
-          </View>
+          <StepCard
+            key={step.title}
+            number={String(index + 1)}
+            title={step.title}
+            description={step.description}
+          />
         ))}
 
-        <View style={styles.stepCard}>
-          <Text style={styles.stepLabel}>Payout</Text>
-          <Text style={styles.stepTitle}>{payout.title}</Text>
-          <Text style={styles.stepDescription}>{payout.subtitle}</Text>
-
+        <StepCard
+          number="₹"
+          title={payout.title}
+          description={payout.subtitle}
+        >
           <View style={styles.chipRow}>
             {propertyTypes.map((item) => (
               <Pressable
@@ -120,11 +138,9 @@ export default function HomeScreen() {
               </Pressable>
             ))}
           </View>
-
           <Text style={styles.rateText}>
             We pay {payout.symbol}{rate} {payout.rateUnit}
           </Text>
-
           <Text style={styles.inputLabel}>Estimated liters</Text>
           <TextInput
             style={styles.input}
@@ -134,36 +150,31 @@ export default function HomeScreen() {
             placeholder="e.g. 10"
             placeholderTextColor={colors.muted}
           />
-
           <View style={styles.payoutBox}>
-            <Text style={styles.payoutLabel}>You receive (estimate)</Text>
+            <Text style={styles.payoutLabel}>You receive</Text>
             <Text style={styles.payoutAmount}>
               {payout.symbol}{estimatedPayout.toFixed(0)}
             </Text>
           </View>
-          <Text style={styles.payoutNote}>{payout.note}</Text>
+        </StepCard>
+
+        <View onLayout={(e) => setSupportY(e.nativeEvent.layout.y)}>
+          <StepCard
+            number="?"
+            title="Need help?"
+            description="Chat on WhatsApp or call us for pickup, payout, or schedule questions."
+          >
+            <Pressable style={styles.whatsappButton} onPress={handleWhatsApp}>
+              <Text style={styles.whatsappButtonText}>Chat on WhatsApp</Text>
+            </Pressable>
+            <Pressable style={styles.secondaryButton} onPress={handleCall}>
+              <Text style={styles.secondaryButtonText}>Call {contact.displayPhone}</Text>
+            </Pressable>
+            <Text style={styles.supportHours}>{contact.supportHours}</Text>
+          </StepCard>
         </View>
 
-        <View style={styles.stepCard}>
-          <Text style={styles.stepLabel}>Support</Text>
-          <Text style={styles.stepTitle}>Need help?</Text>
-          <Text style={styles.stepDescription}>
-            Chat on WhatsApp or call us for pickup, payout, or schedule questions.
-          </Text>
-
-          <Pressable style={styles.whatsappButton} onPress={handleWhatsApp}>
-            <Text style={styles.whatsappButtonText}>💬 Chat on WhatsApp</Text>
-          </Pressable>
-          <Pressable style={styles.callButton} onPress={handleCall}>
-            <Text style={styles.callButtonText}>📞 Call {contact.displayPhone}</Text>
-          </Pressable>
-          <Text style={styles.supportHours}>{contact.supportHours}</Text>
-        </View>
-
-        <LinearGradient
-          colors={[colors.dark, colors.primary]}
-          style={styles.ctaCard}
-        >
+        <View style={styles.ctaCard}>
           <Text style={styles.ctaTitle}>Ready to recycle your oil?</Text>
           <Text style={styles.ctaText}>
             Join homes and restaurants making a difference today.
@@ -173,7 +184,7 @@ export default function HomeScreen() {
               <Text style={styles.ctaButtonText}>Get started</Text>
             </Pressable>
           </Link>
-        </LinearGradient>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -182,82 +193,88 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.cream },
   scroll: { padding: 20, paddingBottom: 40 },
-  header: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 },
-  logoMark: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.md,
-    backgroundColor: colors.mint,
+  header: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
   },
-  logoMarkText: { fontSize: 16 },
   logo: {
-    fontSize: 26,
+    fontSize: 28,
     fontFamily: fonts.heading,
     color: colors.dark,
   },
   logoAccent: { color: colors.light },
-  hero: { marginBottom: 24 },
+  settingsButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  settingsIcon: { fontSize: 18, color: colors.muted },
   badge: {
     alignSelf: "flex-start",
     backgroundColor: colors.mint,
     borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: "rgba(82, 183, 136, 0.3)",
-    paddingHorizontal: 14,
-    paddingVertical: 7,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     marginBottom: 14,
   },
   badgeText: {
     color: colors.dark,
-    fontFamily: fonts.bodyMedium,
-    fontSize: 13,
+    fontFamily: fonts.bodySemi,
+    fontSize: 12,
   },
   title: {
-    fontSize: 32,
+    fontSize: 30,
     fontFamily: fonts.heading,
     color: colors.dark,
-    lineHeight: 38,
+    lineHeight: 36,
     marginBottom: 12,
-    letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: fonts.body,
     color: colors.muted,
-    lineHeight: 24,
+    lineHeight: 23,
+    marginBottom: 20,
   },
-  actions: { marginTop: 22 },
   primaryButton: {
     backgroundColor: colors.primary,
     borderRadius: radius.md,
     paddingVertical: 15,
-    paddingHorizontal: 22,
     alignItems: "center",
-    ...shadow.card,
+    marginBottom: 28,
   },
   primaryButtonText: {
     color: colors.white,
     fontFamily: fonts.bodySemi,
     fontSize: 16,
   },
-  statsCard: { borderRadius: radius.xl, padding: 24, marginBottom: 28 },
+  statsCard: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.xl,
+    padding: 22,
+    marginBottom: 28,
+  },
   statsTitle: {
     color: colors.white,
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: fonts.headingSemi,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   statRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.15)",
-    paddingVertical: 11,
+    borderBottomColor: "rgba(255,255,255,0.2)",
+    paddingVertical: 12,
   },
+  statRowLast: { borderBottomWidth: 0 },
   statLabel: {
-    color: "rgba(255,255,255,0.85)",
+    color: "rgba(255,255,255,0.9)",
     fontFamily: fonts.body,
     flex: 1,
     paddingRight: 12,
@@ -266,56 +283,38 @@ const styles = StyleSheet.create({
   statValue: {
     color: colors.white,
     fontFamily: fonts.heading,
-    fontSize: 20,
+    fontSize: 18,
   },
   sectionTitle: {
-    fontSize: 26,
+    fontSize: 22,
     fontFamily: fonts.heading,
     color: colors.dark,
     textAlign: "center",
-    marginBottom: 6,
-  },
-  sectionSubtitle: {
-    fontSize: 15,
-    fontFamily: fonts.body,
-    color: colors.muted,
-    textAlign: "center",
-    marginBottom: 18,
-    lineHeight: 22,
+    marginBottom: 16,
   },
   stepCard: {
     backgroundColor: colors.white,
     borderRadius: radius.lg,
     padding: 20,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
     ...shadow.card,
   },
   stepNumber: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.md,
-    backgroundColor: colors.mint,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.light,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 10,
+    marginBottom: 12,
   },
   stepNumberText: {
-    color: colors.primary,
+    color: colors.white,
     fontFamily: fonts.heading,
-    fontSize: 17,
-  },
-  stepLabel: {
-    fontSize: 11,
-    fontFamily: fonts.bodySemi,
-    color: colors.light,
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    marginBottom: 4,
+    fontSize: 16,
   },
   stepTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontFamily: fonts.headingSemi,
     color: colors.dark,
     marginBottom: 6,
@@ -325,28 +324,28 @@ const styles = StyleSheet.create({
     color: colors.muted,
     lineHeight: 22,
     fontSize: 14,
-    marginBottom: 12,
+    marginBottom: 4,
   },
-  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 10 },
+  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12, marginBottom: 8 },
   chip: {
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.cream,
     borderRadius: radius.pill,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
   },
   chipSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
-  chipText: { color: colors.muted, fontFamily: fonts.bodySemi, fontSize: 13 },
+  chipText: { color: colors.muted, fontFamily: fonts.bodySemi, fontSize: 12 },
   chipTextSelected: { color: colors.white },
   rateText: {
     fontFamily: fonts.bodyMedium,
     color: colors.primary,
-    fontSize: 14,
-    marginBottom: 12,
+    fontSize: 13,
+    marginBottom: 10,
   },
   inputLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: fonts.bodySemi,
     color: colors.dark,
     marginBottom: 6,
@@ -357,8 +356,8 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: radius.md,
     paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
+    paddingVertical: 11,
+    fontSize: 15,
     fontFamily: fonts.body,
     color: colors.text,
     marginBottom: 12,
@@ -370,21 +369,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 4,
   },
-  payoutLabel: { fontFamily: fonts.bodySemi, color: colors.dark, fontSize: 15 },
-  payoutAmount: { fontFamily: fonts.heading, color: colors.dark, fontSize: 24 },
-  payoutNote: {
-    marginTop: 10,
-    fontFamily: fonts.body,
-    color: colors.muted,
-    fontSize: 12,
-    lineHeight: 18,
-  },
+  payoutLabel: { fontFamily: fonts.bodySemi, color: colors.dark, fontSize: 14 },
+  payoutAmount: { fontFamily: fonts.heading, color: colors.dark, fontSize: 22 },
   whatsappButton: {
-    backgroundColor: "#25D366",
+    backgroundColor: colors.primary,
     borderRadius: radius.md,
-    paddingVertical: 14,
+    paddingVertical: 13,
     alignItems: "center",
+    marginTop: 12,
     marginBottom: 10,
   },
   whatsappButtonText: {
@@ -392,15 +386,15 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodySemi,
     fontSize: 15,
   },
-  callButton: {
-    backgroundColor: colors.mint,
+  secondaryButton: {
+    backgroundColor: colors.white,
     borderRadius: radius.md,
-    paddingVertical: 14,
+    paddingVertical: 13,
     alignItems: "center",
     borderWidth: 1,
     borderColor: colors.border,
   },
-  callButtonText: {
+  secondaryButtonText: {
     color: colors.dark,
     fontFamily: fonts.bodySemi,
     fontSize: 15,
@@ -413,35 +407,36 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   ctaCard: {
+    backgroundColor: colors.primary,
     borderRadius: radius.xl,
-    padding: 28,
-    marginTop: 12,
+    padding: 26,
+    marginTop: 8,
     alignItems: "center",
   },
   ctaTitle: {
     color: colors.white,
-    fontSize: 24,
+    fontSize: 22,
     fontFamily: fonts.heading,
     textAlign: "center",
   },
   ctaText: {
-    color: "rgba(255,255,255,0.85)",
+    color: "rgba(255,255,255,0.9)",
     fontFamily: fonts.body,
     textAlign: "center",
     marginTop: 8,
-    marginBottom: 20,
+    marginBottom: 18,
     lineHeight: 22,
-    fontSize: 15,
+    fontSize: 14,
   },
   ctaButton: {
     backgroundColor: colors.white,
     borderRadius: radius.md,
-    paddingVertical: 13,
-    paddingHorizontal: 26,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
   },
   ctaButtonText: {
     color: colors.dark,
     fontFamily: fonts.bodySemi,
-    fontSize: 16,
+    fontSize: 15,
   },
 });
