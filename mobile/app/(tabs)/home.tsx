@@ -1,10 +1,13 @@
-import { router } from "expo-router";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { PrimaryButton } from "../../components/PrimaryButton";
 import { ScreenHeader } from "../../components/ScreenHeader";
+import { useAuth } from "../../context/AuthContext";
 import { colors, fonts, radius, shadow } from "../../constants/theme";
-import { demoImpact, demoUpcomingPickup, demoUser } from "../../lib/demo-data";
+import { fetchMyStats, type CustomerStats } from "../../lib/api";
+import { formatPickupType, formatQuantity, formatStatus, pickupDateLabel } from "../../lib/pickup-display";
 
 const benefits = [
   { icon: "🌱", label: "Eco-friendly" },
@@ -13,14 +16,31 @@ const benefits = [
 ];
 
 export default function HomeScreen() {
+  const { user, token } = useAuth();
+  const [stats, setStats] = useState<CustomerStats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!token) return;
+      setLoading(true);
+      fetchMyStats(token)
+        .then(setStats)
+        .catch(() => setStats(null))
+        .finally(() => setLoading(false));
+    }, [token]),
+  );
+
+  const upcoming = stats?.upcoming;
+
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <ScreenHeader
-          title={`Hello, ${demoUser.name}`}
+          title={`Hello, ${user?.name?.split(" ")[0] ?? "there"}`}
           subtitle="Ready to recycle your oil?"
           onNotificationPress={() =>
-            Alert.alert("Notifications", "Push notifications coming in Phase 2.")
+            Alert.alert("Notifications", "Push notifications coming soon.")
           }
         />
 
@@ -30,44 +50,52 @@ export default function HomeScreen() {
             <Text style={styles.heroSub}>
               Book a free pickup and get paid when we collect.
             </Text>
-            <PrimaryButton
-              label="Book a Pickup"
-              onPress={() => router.push("/book")}
-            />
+            <PrimaryButton label="Book a Pickup" onPress={() => router.push("/book")} />
           </View>
           <Text style={styles.heroOil}>🛢️</Text>
         </View>
 
         <Text style={styles.sectionTitle}>Your Impact</Text>
-        <View style={styles.impactRow}>
-          <View style={styles.impactCard}>
-            <Text style={styles.impactValue}>{demoImpact.litersCollected} L</Text>
-            <Text style={styles.impactLabel}>Oil collected</Text>
+        {loading ? (
+          <ActivityIndicator color={colors.primary} style={{ marginBottom: 24 }} />
+        ) : (
+          <View style={styles.impactRow}>
+            <View style={styles.impactCard}>
+              <Text style={styles.impactValue}>{stats?.litersCollected ?? 0} L</Text>
+              <Text style={styles.impactLabel}>Oil collected</Text>
+            </View>
+            <View style={styles.impactCard}>
+              <Text style={styles.impactValue}>{stats?.totalPickups ?? 0}</Text>
+              <Text style={styles.impactLabel}>Pickups done</Text>
+            </View>
           </View>
-          <View style={styles.impactCard}>
-            <Text style={styles.impactValue}>{demoImpact.totalPickups}</Text>
-            <Text style={styles.impactLabel}>Pickups done</Text>
-          </View>
-        </View>
+        )}
 
         <Text style={styles.sectionTitle}>Upcoming Pickup</Text>
-        <View style={styles.upcomingCard}>
-          <View style={styles.upcomingTop}>
-            <View style={styles.statusBadge}>
-              <Text style={styles.statusText}>{demoUpcomingPickup.status}</Text>
+        {upcoming ? (
+          <View style={styles.upcomingCard}>
+            <View style={styles.upcomingTop}>
+              <View style={styles.statusBadge}>
+                <Text style={styles.statusText}>{formatStatus(upcoming.status)}</Text>
+              </View>
+              <Pressable onPress={() => router.push(`/track/${upcoming.id}`)}>
+                <Text style={styles.trackLink}>Track →</Text>
+              </Pressable>
             </View>
-            <Pressable onPress={() => Alert.alert("Tracking", "Tracking screen coming in Phase 2.")}>
-              <Text style={styles.trackLink}>Track →</Text>
-            </Pressable>
+            <Text style={styles.upcomingMeta}>
+              {pickupDateLabel(upcoming)}
+              {upcoming.preferredTime ? ` · ${upcoming.preferredTime}` : ""}
+            </Text>
+            <Text style={styles.upcomingDetail}>
+              {formatPickupType(upcoming.type)} · {formatQuantity(upcoming.quantity)}
+            </Text>
+            <Text style={styles.upcomingAddress}>{upcoming.address}</Text>
           </View>
-          <Text style={styles.upcomingMeta}>
-            {demoUpcomingPickup.date} · {demoUpcomingPickup.time}
-          </Text>
-          <Text style={styles.upcomingDetail}>
-            {demoUpcomingPickup.type} · {demoUpcomingPickup.quantity}
-          </Text>
-          <Text style={styles.upcomingAddress}>{demoUpcomingPickup.address}</Text>
-        </View>
+        ) : (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyText}>No upcoming pickups. Book one today!</Text>
+          </View>
+        )}
 
         <Text style={styles.sectionTitle}>Why Reoil?</Text>
         <View style={styles.benefitsRow}>
@@ -146,6 +174,15 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     ...shadow.soft,
   },
+  emptyCard: {
+    backgroundColor: colors.white,
+    borderRadius: radius.lg,
+    padding: 18,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  emptyText: { fontFamily: fonts.body, color: colors.muted, textAlign: "center" },
   upcomingTop: {
     flexDirection: "row",
     justifyContent: "space-between",

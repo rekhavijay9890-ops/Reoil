@@ -15,12 +15,12 @@ import { PrimaryButton } from "../../components/PrimaryButton";
 import { StepIndicator } from "../../components/StepIndicator";
 import { colors, fonts, radius, shadow } from "../../constants/theme";
 import {
-  demoUser,
   quantityOptions,
   sourceTypes,
   timeSlots,
 } from "../../lib/demo-data";
 import { submitPickup } from "../../lib/api";
+import { useAuth } from "../../context/AuthContext";
 
 function mapTypeForApi(type: string) {
   if (type === "hotel") return "commercial";
@@ -52,14 +52,15 @@ function nextDates(count = 7) {
 }
 
 export default function BookPickupScreen() {
+  const { user, token } = useAuth();
   const [step, setStep] = useState(1);
   const [type, setType] = useState("home");
   const [quantity, setQuantity] = useState("10");
   const [address, setAddress] = useState("");
   const [instructions, setInstructions] = useState("");
-  const [name, setName] = useState(demoUser.name);
-  const [phone, setPhone] = useState(demoUser.phone.replace(/\s/g, ""));
-  const [email, setEmail] = useState(demoUser.email);
+  const [name, setName] = useState(user?.name ?? "");
+  const [phone, setPhone] = useState(user?.phone ?? "");
+  const [email, setEmail] = useState(user?.email ?? "");
   const [date, setDate] = useState("");
   const [timeSlot, setTimeSlot] = useState("");
   const [loading, setLoading] = useState(false);
@@ -74,23 +75,29 @@ export default function BookPickupScreen() {
 
     setLoading(true);
     try {
-      await submitPickup({
-        name,
-        email,
-        phone,
-        address,
-        type: mapTypeForApi(type),
-        quantity: mapQuantityForApi(quantity),
-        notes: `Preferred: ${date} ${timeSlot}. ${instructions}`.trim(),
-      });
+      const dateLabel = dates.find((d) => d.value === date)?.label ?? date;
+      const result = await submitPickup(
+        {
+          name,
+          email,
+          phone,
+          address,
+          type: mapTypeForApi(type),
+          quantity: mapQuantityForApi(quantity),
+          preferredDate: dateLabel,
+          preferredTime: timeSlot,
+          notes: instructions.trim(),
+        },
+        token ?? undefined,
+      );
 
       const typeLabel = sourceTypes.find((s) => s.value === type)?.label ?? type;
       const qtyLabel = quantityOptions.find((q) => q.value === quantity)?.label ?? quantity;
-      const dateLabel = dates.find((d) => d.value === date)?.label ?? date;
 
       router.replace({
         pathname: "/book/success",
         params: {
+          id: result.pickup?.id ?? "",
           type: typeLabel,
           quantity: qtyLabel,
           address,

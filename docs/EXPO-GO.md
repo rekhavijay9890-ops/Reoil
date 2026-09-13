@@ -6,12 +6,8 @@ Ngrok tunnel (`--tunnel`) often fails in Codespaces. Use **port forwarding** ins
 
 ```bash
 cd mobile
-echo "EXPO_PUBLIC_API_URL=https://reoil-ten.vercel.app" > .env
-
-export EXPO_PACKAGER_PROXY_URL="https://${CODESPACE_NAME}-8081.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}"
-export EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
-
-npx expo start --port 8081
+npm install
+npm run start:codespace
 ```
 
 Then:

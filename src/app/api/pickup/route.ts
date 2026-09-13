@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { isAdminAuthorized } from "@/lib/auth";
+import { getBearerToken, verifyCustomerToken } from "@/lib/customer-auth";
 import { notifyPickupCreated } from "@/lib/notify";
-import { listPickups, savePickup } from "@/lib/pickup-store";
+import { buildPickupInput, listPickups, savePickup } from "@/lib/pickup-store";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -36,7 +37,6 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const body = await request.json();
-
   const { name, email, phone, address, type, quantity } = body;
 
   if (!name || !email || !phone || !address || !type || !quantity) {
@@ -46,15 +46,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const pickup = await savePickup({
-    name: String(name).trim(),
-    email: String(email).trim(),
-    phone: String(phone).trim(),
-    address: String(address).trim(),
-    type: String(type),
-    quantity: String(quantity),
-    notes: body.notes ? String(body.notes).trim() : "",
-  });
+  const token = getBearerToken(request);
+  const session = token ? verifyCustomerToken(token) : null;
+
+  const pickup = await savePickup(
+    buildPickupInput(body, session?.profileId),
+  );
 
   await notifyPickupCreated(pickup);
 

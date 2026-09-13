@@ -1,30 +1,58 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 import { BarChart } from "../../components/BarChart";
+import { useAuth } from "../../context/AuthContext";
 import { colors, fonts, radius, shadow } from "../../constants/theme";
-import { demoEarnings } from "../../lib/demo-data";
+import { fetchMyStats, type CustomerStats } from "../../lib/api";
 
 export default function EarningsScreen() {
+  const { token } = useAuth();
+  const [stats, setStats] = useState<CustomerStats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!token) return;
+      setLoading(true);
+      fetchMyStats(token)
+        .then(setStats)
+        .catch(() => setStats(null))
+        .finally(() => setLoading(false));
+    }, [token]),
+  );
+
+  if (loading) {
+    return <ActivityIndicator color={colors.primary} style={{ marginTop: 40 }} />;
+  }
+
+  const monthly = stats?.monthlyEarnings?.length
+    ? stats.monthlyEarnings
+    : [{ month: "—", amount: 0 }];
+
   return (
     <ScrollView contentContainerStyle={styles.scroll}>
       <View style={styles.totalCard}>
         <Text style={styles.totalLabel}>Total Earnings</Text>
-        <Text style={styles.totalAmount}>₹ {demoEarnings.total.toLocaleString("en-IN")}</Text>
-        <Text style={styles.totalNote}>Paid via cash & UPI at pickup</Text>
+        <Text style={styles.totalAmount}>
+          ₹ {(stats?.totalEarnings ?? 0).toLocaleString("en-IN")}
+        </Text>
+        <Text style={styles.totalNote}>From completed pickups only</Text>
       </View>
 
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
-          <Text style={styles.statValue}>{demoEarnings.totalCollections} L</Text>
+          <Text style={styles.statValue}>{stats?.litersCollected ?? 0} L</Text>
           <Text style={styles.statLabel}>Total collections</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statValue}>{demoEarnings.totalPickups}</Text>
+          <Text style={styles.statValue}>{stats?.totalPickups ?? 0}</Text>
           <Text style={styles.statLabel}>Total pickups</Text>
         </View>
       </View>
 
       <Text style={styles.chartTitle}>Earnings overview</Text>
-      <BarChart data={demoEarnings.monthly} />
+      <BarChart data={monthly} />
     </ScrollView>
   );
 }

@@ -11,6 +11,8 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { ActivityIndicator, View } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { AuthProvider } from "../context/AuthContext";
 import { colors } from "../constants/theme";
 
 export default function RootLayout() {
@@ -38,13 +40,18 @@ export default function RootLayout() {
   }
 
   return (
-    <>
-      <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="book" options={{ presentation: "card" }} />
-      </Stack>
-    </>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <StatusBar style="dark" />
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="login" />
+          <Stack.Screen name="register" options={{ presentation: "card" }} />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="book" options={{ presentation: "card" }} />
+          <Stack.Screen name="track/[id]" options={{ presentation: "card", headerShown: true, title: "Track pickup" }} />
+        </Stack>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }

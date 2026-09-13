@@ -6,6 +6,7 @@ import { colors, fonts, radius, shadow } from "../../constants/theme";
 
 export default function BookingSuccessScreen() {
   const params = useLocalSearchParams<{
+    id?: string;
     type?: string;
     quantity?: string;
     address?: string;
@@ -34,9 +35,13 @@ export default function BookingSuccessScreen() {
 
         <PrimaryButton
           label="Track pickup"
-          onPress={() =>
-            router.replace("/(tabs)/bookings")
-          }
+          onPress={() => {
+            if (params.id) {
+              router.replace(`/track/${params.id}`);
+            } else {
+              router.replace("/(tabs)/bookings");
+            }
+          }}
         />
         <View style={{ height: 12 }} />
         <PrimaryButton

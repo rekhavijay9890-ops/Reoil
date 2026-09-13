@@ -1,7 +1,8 @@
+import { router } from "expo-router";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "../../context/AuthContext";
 import { colors, fonts, radius, shadow } from "../../constants/theme";
-import { demoUser } from "../../lib/demo-data";
 import { openPhoneCall, openWhatsApp } from "../../lib/contact-actions";
 
 const menuItems = [
@@ -15,15 +16,23 @@ const menuItems = [
 ];
 
 export default function ProfileScreen() {
+  const { user, signOut } = useAuth();
+
+  async function handleLogout() {
+    await signOut();
+    router.replace("/login");
+  }
+
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.header}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{demoUser.name[0]}</Text>
+            <Text style={styles.avatarText}>{user?.name?.[0] ?? "?"}</Text>
           </View>
-          <Text style={styles.name}>{demoUser.name}</Text>
-          <Text style={styles.phone}>{demoUser.phone}</Text>
+          <Text style={styles.name}>{user?.name ?? "Guest"}</Text>
+          <Text style={styles.phone}>{user?.phone ?? ""}</Text>
+          <Text style={styles.email}>{user?.email ?? ""}</Text>
         </View>
 
         <View style={styles.menu}>
@@ -34,8 +43,12 @@ export default function ProfileScreen() {
               onPress={() => {
                 if (item.label === "Help & support") {
                   openWhatsApp().catch(() => Alert.alert("WhatsApp", "Could not open WhatsApp."));
+                } else if (item.label === "Pickup history") {
+                  router.push("/(tabs)/bookings");
+                } else if (item.label === "Earnings & payments") {
+                  router.push("/(tabs)/earnings");
                 } else {
-                  Alert.alert(item.label, "Available in Phase 2 with login & saved data.");
+                  Alert.alert(item.label, "More options coming soon.");
                 }
               }}
             >
@@ -46,10 +59,7 @@ export default function ProfileScreen() {
           ))}
         </View>
 
-        <Pressable
-          style={styles.logout}
-          onPress={() => Alert.alert("Logout", "Login is skipped in Phase 1.")}
-        >
+        <Pressable style={styles.logout} onPress={handleLogout}>
           <Text style={styles.logoutText}>Logout</Text>
         </Pressable>
 
@@ -84,6 +94,7 @@ const styles = StyleSheet.create({
   },
   name: { fontSize: 22, fontFamily: fonts.heading, color: colors.dark },
   phone: { marginTop: 4, fontFamily: fonts.body, color: colors.muted, fontSize: 14 },
+  email: { marginTop: 2, fontFamily: fonts.body, color: colors.primary, fontSize: 13 },
   menu: {
     backgroundColor: colors.white,
     borderRadius: radius.lg,
